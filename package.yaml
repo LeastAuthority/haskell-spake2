@@ -1,0 +1,35 @@
+name: spake2
+version: 0.1.0
+synopsis: Implementation of the SPAKE2 Password-Authenticated Key Exchange algorithm
+description: |
+  This library implements the SPAKE2 password-authenticated key exchange
+  ("PAKE") algorithm. This allows two parties, who share a weak password, to
+  safely derive a strong shared secret (and therefore build an
+  encrypted+authenticated channel).
+maintainer: Jonathan M. Lange <jml@mumak.net>
+license: AGPL
+github: jml/haskell-spake2
+category: Crypto
+
+ghc-options: -Wall -Werror
+default-extensions:
+  - NoImplicitPrelude
+  - OverloadedStrings
+
+dependencies:
+  - base >= 4.9 && < 5
+  - protolude
+
+library:
+  source-dirs: src
+  dependencies:
+    - cryptonite
+
+tests:
+  tasty:
+    main: Tasty.hs
+    source-dirs: tests
+    dependencies:
+      - spake2
+      - tasty
+      - tasty-hspec
