@@ -24,6 +24,7 @@ library:
   source-dirs: src
   dependencies:
     - cryptonite
+    - memory
 
 tests:
   tasty:
