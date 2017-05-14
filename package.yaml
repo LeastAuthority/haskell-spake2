@@ -7,7 +7,7 @@ description: |
   safely derive a strong shared secret (and therefore build an
   encrypted+authenticated channel).
 maintainer: Jonathan M. Lange <jml@mumak.net>
-license: AGPL
+license: Apache
 github: jml/haskell-spake2
 category: Crypto
 

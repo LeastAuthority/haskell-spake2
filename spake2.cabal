@@ -13,7 +13,7 @@ category:       Crypto
 homepage:       https://github.com/jml/haskell-spake2#readme
 bug-reports:    https://github.com/jml/haskell-spake2/issues
 maintainer:     Jonathan M. Lange <jml@mumak.net>
-license:        AGPL
+license:        Apache
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
