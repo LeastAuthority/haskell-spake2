@@ -2,6 +2,7 @@
 module Crypto.Spake2.Groups
   ( IntegerGroup
   , arbitraryElement
+  , expandArbitraryElementSeed
   ) where
 
 import Protolude hiding (group)
@@ -23,7 +24,7 @@ data IntegerGroup
   = IntegerGroup
   { order :: Integer
   , fieldSize :: Integer
-  , generator :: Integer
+  , _generator :: Integer
   } deriving (Eq, Ord, Show)
 
 type Bytes = Int  -- XXX: I guess this should be some sort of unsigned
@@ -33,8 +34,8 @@ elementSizeBytes group = numBytes (fieldSize group)
 
 data Element
   = Element
-  { fromGroup :: IntegerGroup
-  , element :: Integer
+  { _fromGroup :: IntegerGroup
+  , _element :: Integer
   } deriving (Eq, Ord, Show)
 
 
