@@ -5,6 +5,8 @@ module Crypto.Spake2.Groups
   , arbitraryElement
   , bytesToElement
   , expandArbitraryElementSeed
+    -- * Utilities
+  , expandData
   ) where
 
 import Protolude hiding (group, length)
@@ -70,13 +72,20 @@ bytesToElement group@IntegerGroup{order} bytes = do
 isMember :: IntegerGroup -> Element -> Bool
 isMember IntegerGroup{order, fieldSize} (Element i) = expSafe i fieldSize order == 1
 
-expandArbitraryElementSeed :: (ByteArrayAccess ikm, ByteArray out) => ikm -> Int -> out
-expandArbitraryElementSeed value size =
+-- | Take an arbitrary sequence of bytes and expand it to be the given number
+-- of bytes. Do this by extracting a pseudo-random key and expanding it using
+-- HKDF.
+expandData :: (ByteArrayAccess input, ByteArray output) => ByteString -> input -> Int -> output
+expandData info input size =
   HKDF.expand prk info size
   where
     prk :: HKDF.PRK SHA256
-    prk = HKDF.extract salt value
+    prk = HKDF.extract salt input
 
-    salt, info :: ByteString
+    -- XXX: I'm no crypto expert, but hard-coding an empty string as a salt
+    -- seems kind of weird.
+    salt :: ByteString
     salt = ""
-    info = "SPAKE 2 arbitrary element"
+
+expandArbitraryElementSeed :: (ByteArrayAccess ikm, ByteArray out) => ikm -> Int -> out
+expandArbitraryElementSeed = expandData "SPAKE 2 arbitrary element"
