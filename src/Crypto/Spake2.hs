@@ -68,8 +68,8 @@ __NOTE__: This is jml's best understanding. It's likely to be wrong.
 literature often writes this using product notation.
 
 [@scalar multiplication@]: adding a point to itself a scalar number of times.
-Confusingly, this is often written as \(X^{n}\) where \(X\) is a point and
-\(n\) a scalar.
+Confusingly, this is often written as \(X^{n}\) where \(X\) is a point and \(n\)
+a scalar.
 
 By convention, the group operation is referred to as "addition".
 
@@ -84,8 +84,8 @@ TODO
 /This is derived from the paper linked above./
 
 One side, A, initiates the exchange. They draw a random scalar, \(x\), and
-matching point, \(X\), from the group. They then "blind" \(X\) by adding it to
-\(M\) multiplied by the password in scalar form. Call this \(X^{\star}\).
+matching point, \(X\), from the group. They then "blind" \(X\) by adding it to \(M\)
+multiplied by the password in scalar form. Call this \(X^{\star}\).
 
 \[X^{\star} \leftarrow X \cdot M^{pw}\]
 
