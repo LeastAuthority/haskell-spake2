@@ -43,15 +43,15 @@ createSessionKey = notImplemented -- You'll have to figure this out. Some sort o
 
 @
 runSpake2 = do
-  let params = Params curve m n
-  let spake2 = Spake2 params password
-  spake2Exchange <- startSpake2 spake2
-  let outbound = computeOutboundMessage spake2Exchange
+  let params = Math.Params curve m n
+  let spake2 = Math.Spake2 params password
+  spake2Exchange <- Math.startSpake2 spake2
+  let outbound = Math.computeOutboundMessage spake2Exchange
   sendOutboundMessage outbound
   -- NOTE: We could wait for this before sending the outbound. Depends on the
   -- network protocol you're arranging with your application.
   inbound <- waitForInboundMessage
-  let key = generateKeyMaterial spake2Exchange
+  let key = Math.generateKeyMaterial spake2Exchange
   createSessionKey sideA sideB outbound inbound key
 @
 
@@ -61,13 +61,13 @@ The same as Side A, but @n@ and @m@ are swapped around.
 
 @
 runSpake2 = do
-  let params = Params curve n m
-  let spake2 = Spake2 params password
+  let params = Math.Params curve n m
+  let spake2 = Math.Spake2 params password
   inbound <- waitForInboundMessage
-  spake2Exchange <- startSpake2 spake2
-  let outbound = computeOutboundMessage spake2Exchange
+  spake2Exchange <- Math.startSpake2 spake2
+  let outbound = Math.computeOutboundMessage spake2Exchange
   sendOutboundMessage outbound
-  let key = generateKeyMaterial spake2Exchange
+  let key = Math.generateKeyMaterial spake2Exchange
   createSessionKey sideA sideB outbound inbound key
 @
 
