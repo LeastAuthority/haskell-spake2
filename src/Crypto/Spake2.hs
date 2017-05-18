@@ -71,7 +71,7 @@ literature often writes this using product notation.
 Confusingly, this is often written as \(X^{n}\) where \(X\) is a point and \(n\)
 a scalar.
 
-By convention, the group operation is referred to as "addition".
+#protocol#
 
 === Protocol
 
@@ -123,75 +123,34 @@ TODO
 Hopefully the same as what was written above. Open questions:
 
 - what's up with its obsession in padding things out to a certain number of bytes
-- are we sure we're using the same hash algorithm, "blinds" 
+- are we sure we're using the same hash algorithm, "blinds"
+
+== Assumptions
+
+* 'curveGenerateKeyPair' generates a point and scalar that we can use in the SPAKE2 protocol
+* 'EllipticCurveArith' provides all the operations we need to implement SPAKE2
+* We can reasonably implement 'EllipticCurveArith' for "ed25519" so as to match python-spake2's default SPAKE2 protocol parameters.
 
 -}
 
 module Crypto.Spake2
   ( something
-  , Spake2(..)  -- XXX: Not sure want to export innards but it disables "unused" warning
-  , makeSpake2
-  , startSpake2
-  , Started(..) -- XXX: ditto
-  , Params(..)  -- XXX: ditto
-  , makeParams
+  , Password
   , expandPassword
   ) where
 
 import Protolude
 
-import Crypto.ECC (EllipticCurve(..), KeyPair(..))
-import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess)
 
 import Crypto.Spake2.Groups (expandData)
 
+
 something :: a -> a
 something x = x
 
-data Params curve
-  = Params
-  { proxy :: Proxy curve
-  , m :: Point curve
-  , n :: Point curve
-  , s :: Point curve -- ^ Used for both sides of symmetric session.
-  }
-
--- | Create parameters for SPAKE2.
-makeParams :: (MonadRandom randomly, EllipticCurve curve) => Proxy curve -> randomly (Params curve)
-makeParams proxy = Params proxy <$> generateElem <*> generateElem <*> generateElem
-  where
-    generateElem = keypairGetPublic <$> curveGenerateKeyPair proxy
-
-
+-- | Shared secret password used to negotiate the connection.
 newtype Password = Password ByteString
 
 expandPassword :: (ByteArrayAccess bytes, ByteArray output) => Password -> Int -> output
 expandPassword (Password bytes) numBytes = expandData "SPAKE2 password" bytes numBytes
-
-data Spake2 curve
-  = Spake2
-  { params :: Params curve
-  , password :: Password
-  }
-
-makeSpake2 :: Password -> Params curve -> Spake2 curve
-makeSpake2 password params = Spake2 params password
-
-data Started curve
-  = Started
-  { spake2 :: Spake2 curve
-    -- XXX: I think this is the same as picking an arbitrary scalar and then
-    -- projecting it into the 'element' space by multiplying it by the
-    -- generating element
-  , xy :: KeyPair curve
-  }
-
-startSpake2 :: (EllipticCurve curve, MonadRandom randomly) => Spake2 curve -> randomly (Started curve)
-startSpake2 spake2' = Started spake2' <$> curveGenerateKeyPair (proxy . params $ spake2')
-
-{-
-computeOutboundMessage :: EllipticCurveArith curve => Started curve -> Point curve -> outbound
-computeOutboundMessage Started{spake2, xy} blinding =
-  notImplemented
--}
