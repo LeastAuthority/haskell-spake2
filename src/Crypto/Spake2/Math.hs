@@ -51,7 +51,7 @@ runSpake2 = do
   -- NOTE: We could wait for this before sending the outbound. Depends on the
   -- network protocol you're arranging with your application.
   inbound <- waitForInboundMessage
-  let key = Math.generateKeyMaterial spake2Exchange
+  let key = Math.generateKeyMaterial spake2Exchange inbound
   createSessionKey sideA sideB outbound inbound key
 @
 
@@ -67,7 +67,7 @@ runSpake2 = do
   spake2Exchange <- Math.startSpake2 spake2
   let outbound = Math.computeOutboundMessage spake2Exchange
   sendOutboundMessage outbound
-  let key = Math.generateKeyMaterial spake2Exchange
+  let key = Math.generateKeyMaterial spake2Exchange inbound
   createSessionKey sideA sideB outbound inbound key
 @
 
