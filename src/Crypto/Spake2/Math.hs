@@ -52,7 +52,7 @@ runSpake2 = do
   -- network protocol you're arranging with your application.
   inbound <- waitForInboundMessage
   let key = Math.generateKeyMaterial spake2Exchange inbound
-  createSessionKey sideA sideB outbound inbound key
+  createSessionKey sideA sideB outbound inbound key password
 @
 
 === Side B
@@ -68,7 +68,7 @@ runSpake2 = do
   let outbound = Math.computeOutboundMessage spake2Exchange
   sendOutboundMessage outbound
   let key = Math.generateKeyMaterial spake2Exchange inbound
-  createSessionKey sideA sideB outbound inbound key
+  createSessionKey sideA sideB outbound inbound key password
 @
 
 -}
@@ -132,7 +132,7 @@ computeOutboundMessage Started{spake2 = Spake2{params = Params{proxy, ourBlind},
 -- This key material is the last piece of input required to make the session
 -- key, \(SK\), which should be generated as:
 --
---   \[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K)\]
+--   \[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K, pw)\]
 --
 -- Where:
 --
@@ -142,6 +142,7 @@ computeOutboundMessage Started{spake2 = Spake2{params = Params{proxy, ourBlind},
 -- * \(X^{star}\) is the outbound message from the initiating side
 -- * \(Y^{star}\) is the outbound message from the receiving side
 -- * \(K\) is the result of this function
+-- * \(pw\) is the password (this is what makes it SPAKE2, not SPAKE1)
 --
 -- __XXX__: jml can't figure out how to do group division within the
 -- constraints of 'EllipticCurveArith', so we are also constraining the scalar

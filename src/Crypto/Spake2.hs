@@ -110,11 +110,13 @@ Side B likewise calculates:
 
 They then both figure out the session key:
 
-\[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K)\]
+\[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K, pw)\]
 
-Where side A uses \(K_A\) and side B uses \(K_B\).
+Where side A uses \(K_A\) and side B uses \(K_B\). Including \(pw\) in the
+session key is what makes this SPAKE2, not SPAKE1.
 
-If both parties were honest and knew the password, the key will be the same on both sides.
+If both parties were honest and knew the password, the key will be the same on
+both sides.
 
 ==== How python-spake2 works
 
