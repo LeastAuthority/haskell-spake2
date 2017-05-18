@@ -35,6 +35,7 @@ library
   exposed-modules:
       Crypto.Spake2
       Crypto.Spake2.Groups
+      Crypto.Spake2.Math
   default-language: Haskell2010
 
 test-suite tasty
