@@ -110,15 +110,25 @@ Side B likewise calculates:
 
 They then both figure out the session key:
 
-\[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K)\]
+\[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K, pw)\]
 
-Where side A uses \(K_A\) and side B uses \(K_B\).
+Where side A uses \(K_A\) and side B uses \(K_B\). Including \(pw\) in the
+session key is what makes this SPAKE2, not SPAKE1.
 
-If both parties were honest and knew the password, the key will be the same on both sides.
+If both parties were honest and knew the password, the key will be the same on
+both sides.
 
 ==== How python-spake2 works
 
-TODO
+- Message to other side is prepended with a single character, @A@, @B@, or
+  @S@, to indicate which side it came from
+- The hash function for generating the session key has a few interesting properties:
+    - uses SHA256 for hashing
+    - does not include password or IDs directly, but rather uses /their/ SHA256
+      digests as inputs to the hash
+    - for the symmetric version, it sorts \(X^{\star}\) and \(Y^{\star}\),
+      because neither side knows which is which
+- By default, the ID of either side is the empty bytestring
 
 Hopefully the same as what was written above. Open questions:
 
@@ -130,6 +140,14 @@ Hopefully the same as what was written above. Open questions:
 * 'curveGenerateKeyPair' generates a point and scalar that we can use in the SPAKE2 protocol
 * 'EllipticCurveArith' provides all the operations we need to implement SPAKE2
 * We can reasonably implement 'EllipticCurveArith' for "ed25519" so as to match python-spake2's default SPAKE2 protocol parameters.
+
+== References
+
+* [Javascript implementation](https://github.com/bitwiseshiftleft/sjcl/pull/273/), includes long, possibly relevant discussion
+* [Python implementation](https://github.com/warner/python-spake2)
+* [SPAKE2 random elements](http://www.lothar.com/blog/54-spake2-random-elements/) - blog post by warner about choosing \(M\) and \(N\)
+* [Simple Password-Based Encrypted Key Exchange Protocols](http://www.di.ens.fr/~pointche/Documents/Papers/2005_rsa.pdf) by Michel Abdalla and David Pointcheval
+* [draft-irtf-cfrg-spake2-03](https://tools.ietf.org/html/draft-irtf-cfrg-spake2-03) - expired IRTF draft for SPAKE2
 
 -}
 
