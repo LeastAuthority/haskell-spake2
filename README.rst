@@ -24,6 +24,13 @@ Right now:
 * PAKE2+
 * any `Elligator Edition <https://moderncrypto.org/mail-archive/curves/2015/000424.html>`_ variants
 
+How to use it
+=============
+
+Right now, you don't—it doesn't work.
+
+If you want to know more, check out the `main module documentation <src/Crypto/Spake2.hs>`_.
+
 Contributing
 ============
 
