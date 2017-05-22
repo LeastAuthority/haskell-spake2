@@ -110,10 +110,9 @@ data Spake2Exchange curve
                            -- SPAKE2 protocol we are using. Parameters,
                            -- password, and group must be the same for this to
                            -- work.
-  , xy :: KeyPair curve -- ^ Arbitrary point chosen by this side of the
-                        -- exchange. It is kept secret, and is only used to
-                        -- negotiate an exchange. A "blinded" form is sent to
-                        -- the other side of the protocol.
+  , xy :: KeyPair curve -- ^ Arbitrary point and scalar chosen by this side of the exchange.
+                        -- It is kept secret, and is only used to negotiate an exchange.
+                        -- A "blinded" form is sent to the other side of the protocol.
   }
 
 -- | Initiate the SPAKE2 exchange. Generates a secret (@xy@) that will be held

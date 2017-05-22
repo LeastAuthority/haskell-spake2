@@ -181,21 +181,126 @@ both sides.
 module Crypto.Spake2
   ( something
   , Password
+  , Protocol
+  , makeAsymmetricProtocol
+  , makeSymmetricProtocol
   , expandPassword
+  , passwordToScalar
+  , generateArbitraryElement
+  , createSessionKey
   ) where
 
 import Protolude
 
+import Crypto.ECC (EllipticCurve(..))
+import Crypto.Hash (HashAlgorithm, hashWith)
 import Data.ByteArray (ByteArray, ByteArrayAccess)
 
 import Crypto.Spake2.Groups (expandData)
 
 
+-- | Do-nothing function so that we have something to import in our tests.
+-- TODO: Actually test something genuine and then remove this.
 something :: a -> a
 something x = x
 
 -- | Shared secret password used to negotiate the connection.
-newtype Password = Password ByteString
+newtype Password = Password ByteString deriving (Eq, Ord)
 
+-- | Bytes that identify a side of the protocol
+newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)
+
+
+-- | Convert a user-supplied password into a scalar on a curve.
+passwordToScalar :: Proxy curve -> Password -> Scalar curve
+passwordToScalar = notImplemented
+
+-- | Use a bytestring to deterministically generate a point on a curve.
+generateArbitraryElement :: Proxy curve -> seed -> Point curve
+generateArbitraryElement = notImplemented
+
+-- | One side of the SPAKE2 protocol.
+data Side curve
+  = Side
+  { sideID :: SideID -- ^ Bytes identifying this side
+  , blind :: Point curve -- ^ Arbitrarily chosen point in the curve
+                         -- used by this side to blind outgoing messages.
+  }
+
+
+-- | Relation between two sides in SPAKE2.
+-- Can be either symmetric (both sides are the same), or asymmetric.
+data Relation a
+  = Asymmetric
+  { sideA :: a -- ^ Side A. Both sides need to agree who side A is.
+  , sideB :: a -- ^ Side B. Both sides need to agree who side B is.
+  }
+  | Symmetric
+  { bothSides :: a -- ^ Description used by both sides.
+  }
+
+-- | Everything required for the SPAKE2 protocol.
+--
+-- Both sides must agree on these values for the protocol to work.
+--
+-- Construct with 'makeAsymmetricProtocol' or 'makeSymmetricProtocol'.
+data Protocol curve hashAlgorithm
+  = Protocol
+  { proxy :: Proxy curve -- ^ The curve to use for encryption
+  , hashAlgorithm :: hashAlgorithm -- ^ Hash algorithm used for generating the session key
+  , relation :: Relation (Side curve)  -- ^ How the two sides relate to each other
+  }
+
+-- | Construct an asymmetric SPAKE2 protocol.
+makeAsymmetricProtocol :: hashAlgorithm -> Proxy curve -> Point curve -> Point curve -> SideID -> SideID -> Protocol curve hashAlgorithm
+makeAsymmetricProtocol hashAlgorithm proxy blindA blindB sideA sideB =
+  Protocol proxy hashAlgorithm Asymmetric { sideA = Side { sideID = sideA, blind = blindA }
+                                          , sideB = Side { sideID = sideB, blind = blindB }
+                                          }
+
+-- | Construct a symmetric SPAKE2 protocol.
+makeSymmetricProtocol :: hashAlgorithm -> Proxy curve -> Point curve -> SideID -> Protocol curve hashAlgorithm
+makeSymmetricProtocol hashAlgorithm proxy blind id =
+  Protocol proxy hashAlgorithm (Symmetric Side { sideID = id, blind = blind })
+
+
+-- | Create a session key based on the output of SPAKE2.
+createSessionKey
+  :: (EllipticCurve curve, HashAlgorithm hashAlgorithm)
+  => Protocol curve hashAlgorithm  -- ^ The protocol used for this exchange
+  -> Point curve  -- ^ The message from side A, \(X^{\star}\), or either side if symmetric
+  -> Point curve  -- ^ The message from side B, \(Y^{\star}\), or either side if symmetric
+  -> Point curve  -- ^ The calculated key material, \(K\)
+  -> Password  -- ^ The shared secret password
+  -> ByteString  -- ^ A session key to use for further communication
+createSessionKey Protocol{proxy, hashAlgorithm, relation} x y k (Password password) =
+  hashDigest transcript
+
+  where
+    hashDigest :: ByteArrayAccess input => input -> ByteString
+    hashDigest thing = show (hashWith hashAlgorithm thing)
+
+    transcript =
+      case relation of
+        Asymmetric{sideA, sideB} -> mconcat [ hashDigest password
+                                            , hashDigest (unSideID (sideID sideA))
+                                            , hashDigest (unSideID (sideID sideB))
+                                            , encodePoint proxy x
+                                            , encodePoint proxy y
+                                            , encodePoint proxy k
+                                            ]
+        Symmetric{bothSides} -> mconcat [ hashDigest password
+                                        , hashDigest (unSideID (sideID bothSides))
+                                        , symmetricPoints
+                                        , encodePoint proxy k
+                                        ]
+
+    symmetricPoints =
+      let [ firstMessage, secondMessage ] = sort [ encodePoint proxy x, encodePoint proxy y ]
+      in firstMessage <> secondMessage
+
+-- | Expand a password using HKDF so that it has a certain number of bytes.
+--
+-- TODO: jml cannot remember why you might want to call this.
 expandPassword :: (ByteArrayAccess bytes, ByteArray output) => Password -> Int -> output
 expandPassword (Password bytes) numBytes = expandData "SPAKE2 password" bytes numBytes
