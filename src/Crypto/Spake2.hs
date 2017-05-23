@@ -182,22 +182,28 @@ module Crypto.Spake2
   ( something
   , Password
   , makePassword
+  -- * The SPAKE2 protocol
   , Protocol
   , makeAsymmetricProtocol
   , makeSymmetricProtocol
+  , startSpake2
+  , Math.computeOutboundMessage
+  , createSessionKey
+  -- * Exported to prevent unused warnings
   , expandPassword
   , passwordToScalar
   , generateArbitraryElement
-  , createSessionKey
   ) where
 
 import Protolude
 
 import Crypto.ECC (EllipticCurve(..))
 import Crypto.Hash (HashAlgorithm, hashWith)
+import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess)
 
 import Crypto.Spake2.Groups (expandData)
+import qualified Crypto.Spake2.Math as Math
 
 
 -- | Do-nothing function so that we have something to import in our tests.
@@ -237,6 +243,7 @@ data Side curve
                          -- used by this side to blind outgoing messages.
   }
 
+data WhichSide = SideA | SideB deriving (Eq, Ord, Show, Bounded, Enum)
 
 -- | Relation between two sides in SPAKE2.
 -- Can be either symmetric (both sides are the same), or asymmetric.
@@ -244,6 +251,7 @@ data Relation a
   = Asymmetric
   { sideA :: a -- ^ Side A. Both sides need to agree who side A is.
   , sideB :: a -- ^ Side B. Both sides need to agree who side B is.
+  , us :: WhichSide -- ^ Which side we are
   }
   | Symmetric
   { bothSides :: a -- ^ Description used by both sides.
@@ -252,6 +260,7 @@ data Relation a
 -- | Everything required for the SPAKE2 protocol.
 --
 -- Both sides must agree on these values for the protocol to work.
+-- This /mostly/ means value equality, except for 'us', where each side must have complementary (sp?) values.
 --
 -- Construct with 'makeAsymmetricProtocol' or 'makeSymmetricProtocol'.
 data Protocol curve hashAlgorithm
@@ -262,17 +271,54 @@ data Protocol curve hashAlgorithm
   }
 
 -- | Construct an asymmetric SPAKE2 protocol.
-makeAsymmetricProtocol :: hashAlgorithm -> Proxy curve -> Point curve -> Point curve -> SideID -> SideID -> Protocol curve hashAlgorithm
-makeAsymmetricProtocol hashAlgorithm proxy blindA blindB sideA sideB =
-  Protocol proxy hashAlgorithm Asymmetric { sideA = Side { sideID = sideA, blind = blindA }
-                                          , sideB = Side { sideID = sideB, blind = blindB }
-                                          }
+makeAsymmetricProtocol :: hashAlgorithm -> Proxy curve -> Point curve -> Point curve -> SideID -> SideID -> WhichSide -> Protocol curve hashAlgorithm
+makeAsymmetricProtocol hashAlgorithm proxy blindA blindB sideA sideB whichSide =
+  Protocol
+  { proxy = proxy
+  , hashAlgorithm = hashAlgorithm
+  , relation = Asymmetric
+               { sideA = Side { sideID = sideA, blind = blindA }
+               , sideB = Side { sideID = sideB, blind = blindB }
+               , us = whichSide
+               }
+  }
 
 -- | Construct a symmetric SPAKE2 protocol.
 makeSymmetricProtocol :: hashAlgorithm -> Proxy curve -> Point curve -> SideID -> Protocol curve hashAlgorithm
 makeSymmetricProtocol hashAlgorithm proxy blind id =
-  Protocol proxy hashAlgorithm (Symmetric Side { sideID = id, blind = blind })
+  Protocol
+  { proxy = proxy
+  , hashAlgorithm = hashAlgorithm
+  , relation = Symmetric Side { sideID = id, blind = blind }
+  }
 
+-- | Get the parameters for the mathematical part of SPAKE2 from the protocol specification.
+getParams :: Protocol curve hashAlgorithm -> Math.Params curve
+getParams Protocol{proxy, relation} =
+  case relation of
+    Symmetric{bothSides} -> mkParams bothSides bothSides
+    Asymmetric{sideA, sideB, us} ->
+      case us of
+        SideA -> mkParams sideA sideB
+        SideB -> mkParams sideB sideA
+
+  where
+    mkParams ours theirs =
+      Math.Params
+      { Math.proxy = proxy
+      , Math.ourBlind = blind ours
+      , Math.theirBlind = blind theirs
+      }
+
+startSpake2
+  :: (MonadRandom randomly, EllipticCurve curve)
+  => Protocol curve hashAlgorithm
+  -> Password
+  -> randomly (Math.Spake2Exchange curve)
+startSpake2 protocol password =
+  Math.startSpake2 Math.Spake2 { Math.params = getParams protocol
+                               , Math.password = passwordToScalar (proxy protocol) password
+                               }
 
 -- | Create a session key based on the output of SPAKE2.
 createSessionKey
