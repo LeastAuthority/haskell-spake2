@@ -26,9 +26,10 @@ executables:
     ghc-options: -threaded
     source-dirs: cmd/interop-entrypoint
     dependencies:
-      - spake2
+      - base16-bytestring
       - cryptonite
       - optparse-applicative
+      - spake2
 
 library:
   source-dirs: src

@@ -18,8 +18,9 @@ module Main (main) where
 import Protolude hiding (group)
 
 import Crypto.Hash (SHA256(..))
+import qualified Data.ByteString.Base16 as Base16
 import Options.Applicative
-import System.IO (hGetLine, hPutStrLn)
+import System.IO (hFlush, hGetLine, hPutStrLn)
 
 import qualified Crypto.Spake2 as Spake2
 import Crypto.Spake2
@@ -77,20 +78,30 @@ runInteropTest
 runInteropTest protocol password inH outH = do
   spake2 <- startSpake2 protocol password
   let outElement = computeOutboundMessage spake2
-  hPutStrLn outH (encodeForStdout (elementToMessage protocol outElement))
-  inMsg <- hGetLine inH
-  case extractElement protocol (decodeFromStdin inMsg) of
-    Left err -> abort $ "Could not handle incoming message (msg = " <> show inMsg <> "): " <> formatError err
-    Right inElement -> do
-      -- TODO: This is wrong, because it doesn't handle A/B properly.
-      let key = generateKeyMaterial spake2 inElement
-      let sessionKey = createSessionKey protocol inElement outElement key password
-      hPutStrLn outH (encodeForStdout sessionKey)
+  output (elementToMessage protocol outElement)
+  line <- hGetLine inH
+  let inMsg = parseHex (toS line)
+  case inMsg of
+    Left err -> abort err
+    Right inMsgBytes ->
+      case extractElement protocol inMsgBytes of
+        Left err -> abort $ "Could not handle incoming message (line = " <> show line <> ", msgBytes = " <>  show inMsgBytes <> "): " <> formatError err
+        Right inElement -> do
+          -- TODO: This is wrong, because it doesn't handle A/B properly.
+          let key = generateKeyMaterial spake2 inElement
+          let sessionKey = createSessionKey protocol inElement outElement key password
+          output sessionKey
 
   where
     -- TODO: Somehow hex encode like Python
-    encodeForStdout = toS
-    decodeFromStdin = toS
+    output message = do
+      hPutStrLn outH (toS (Base16.encode message))
+      hFlush outH
+
+    parseHex line =
+      case Base16.decode line of
+        (bytes, "") -> Right bytes
+        _ -> Left ("Could not decode line: " <> show line)
 
 
 makeProtocolFromSide :: Side -> Protocol IntegerAddition SHA256
@@ -112,7 +123,6 @@ makeProtocolFromSide side =
 main :: IO ()
 main = do
   Config side password <- execParser opts
-  print side
   let protocol = makeProtocolFromSide side
   runInteropTest protocol password stdin stdout
   exitSuccess

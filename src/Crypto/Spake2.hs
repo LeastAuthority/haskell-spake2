@@ -231,7 +231,7 @@ data MessageError
 
 formatError :: MessageError -> Text
 formatError EmptyMessage = "Other side sent us an empty message"
-formatError (UnexpectedPrefix got expected) = "Other side claims to be " <> show got <> ", expected " <> show expected
+formatError (UnexpectedPrefix got expected) = "Other side claims to be " <> show (chr (fromIntegral got)) <> ", expected " <> show (chr (fromIntegral expected))
 formatError (BadCrypto err message) = "Could not decode message (" <> show message <> ") to element: " <> show err
 
 -- | Extract an element on the group from an incoming message.
