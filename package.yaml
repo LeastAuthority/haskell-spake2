@@ -33,6 +33,7 @@ executables:
 library:
   source-dirs: src
   dependencies:
+    - bytestring
     - cryptonite
     - memory
 
@@ -41,6 +42,8 @@ tests:
     main: Tasty.hs
     source-dirs: tests
     dependencies:
+      - cryptonite
+      - QuickCheck
       - spake2
       - tasty
       - tasty-hspec

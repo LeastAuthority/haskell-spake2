@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- | Entrypoint for testing interoperability.
 --
 -- Interoperability harness lives at <https://github.com/leastauthority/spake2-interop-test>
@@ -16,7 +17,6 @@ module Main (main) where
 
 import Protolude
 
-import Crypto.ECC (EllipticCurve(..), EllipticCurveArith(..), Curve_P521R1)
 import Crypto.Hash (SHA256)
 import Options.Applicative
 import System.IO (hGetLine, hPutStrLn)
@@ -27,8 +27,13 @@ import Crypto.Spake2
   , createSessionKey
   , makePassword
   , computeOutboundMessage
+  , generateKeyMaterial
+  , extractElement
   , startSpake2
+  , elementToMessage
+  , formatError
   )
+import Crypto.Spake2.Groups (Group(..), IntegerAddition(..))
 
 
 data Config = Config Side Password deriving (Eq, Ord)
@@ -57,17 +62,24 @@ abort message = do
   exitWith (ExitFailure 1)
 
 
-runInteropTest :: (HasCallStack, EllipticCurveArith curve) => Protocol curve SHA256 -> Password -> Handle -> Handle -> IO ()
+runInteropTest
+  :: (HasCallStack, Group group)
+  => Protocol group SHA256
+  -> Password
+  -> Handle
+  -> Handle
+  -> IO ()
 runInteropTest protocol password inH outH = do
   spake2 <- startSpake2 protocol password
-  let outPoint = computeOutboundMessage spake2
-  hPutStrLn outH (encodeForStdout (pointToMessage protocol outPoint))
+  let outElement = computeOutboundMessage spake2
+  hPutStrLn outH (encodeForStdout (elementToMessage protocol outElement))
   inMsg <- hGetLine inH
-  case handleInboundMessage protocol (decodeFromStdin inMsg) of
-    Left err -> abort $ "Could not handle incoming message (msg = " <> show inMsg <> "): " <> show err
-    Right (inPoint, key) -> do
+  case extractElement protocol (decodeFromStdin inMsg) of
+    Left err -> abort $ "Could not handle incoming message (msg = " <> show inMsg <> "): " <> formatError err
+    Right inElement -> do
       -- TODO: This is wrong, because it doesn't handle A/B properly.
-      let sessionKey = createSessionKey protocol inPoint outPoint key password
+      let key = generateKeyMaterial spake2 inElement
+      let sessionKey = createSessionKey protocol inElement outElement key password
       hPutStrLn outH (encodeForStdout sessionKey)
 
   where
@@ -75,14 +87,8 @@ runInteropTest protocol password inH outH = do
     encodeForStdout = toS
     decodeFromStdin = toS
 
-    pointToMessage :: Protocol curve hashAlgorithm -> Point curve -> ByteString
-    pointToMessage = notImplemented
 
-    handleInboundMessage :: Protocol curve hashAlgorithm -> ByteString -> Either Text (Point curve, Point curve)
-    handleInboundMessage = notImplemented
-
-
-makeProtocolFromSide :: Side -> Protocol Curve_P521R1 SHA256
+makeProtocolFromSide :: Side -> Protocol IntegerAddition SHA256
 makeProtocolFromSide _side = notImplemented
 
 
