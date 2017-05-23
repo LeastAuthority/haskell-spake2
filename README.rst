@@ -61,20 +61,22 @@ Current results look like:
 
 .. code-block:: console
 
-   $ runhaskell TestInterop.hs ./python-spake2-interop-entrypoint.py A abc -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
+   $ stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.py A abc -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
    ["./python-spake2-interop-entrypoint.py","A","abc"]
    ["/Users/jml/.local/bin/haskell-spake2-interop-entrypoint","B","abc"]
-   haskell-spake2-interop-entrypoint: Not implemented
-   CallStack (from HasCallStack):
-   error, called at src/Debug.hs:62:18 in protolude-0.1.10-6KZ4RB9zWepBfYwAkgb4xb:Debug
    Traceback (most recent call last):
-     File "./python-spake2-interop-entrypoint.py", line 22, in <module>
-       msg_in = raw_input().decode("hex")
-     File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/hex_codec.py", line 42, in hex_decode
-       output = binascii.a2b_hex(input)
-   TypeError: Odd-length string
-   TestInterop.hs: fd:16: hFlush: resource vanished (Broken pipe)
+     File "./python-spake2-interop-entrypoint.py", line 28, in <module>
+       key = s.finish(msg_in)
+     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/spake2.py", line 108, in finish
+       inbound_elem = g.bytes_to_element(self.inbound_message)
+     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/ed25519_group.py", line 16, in bytes_to_element
+       return ed25519_basic.bytes_to_element(b)
+     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/ed25519_basic.py", line 348, in bytes_to_element
+       raise ValueError("element is not in the right group")
+   ValueError: element is not in the right group
+   TestInterop.hs: fd:15: hGetLine: end of file
 
+Which indicates that we are using the wrong group.
 Which is why we say that haskell-spake2 doesn't work.
 
 
