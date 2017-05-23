@@ -179,7 +179,7 @@ import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess)
 import qualified Data.ByteString as ByteString
 
-import Crypto.Spake2.Groups (Group(..), expandData)
+import Crypto.Spake2.Groups (Group(..), decodeScalar, expandData, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
 
 
@@ -203,10 +203,21 @@ makePassword = Password
 -- | Bytes that identify a side of the protocol
 newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)
 
-
 -- | Convert a user-supplied password into a scalar on a group.
-passwordToScalar :: group -> Password -> Scalar group
-passwordToScalar = notImplemented
+passwordToScalar :: Group group => group -> Password -> Scalar group
+passwordToScalar group password =
+  let oversized = expandPassword password (scalarSizeBytes group + 16) :: ByteString
+  in decodeScalar group oversized
+
+-- | Expand a password using HKDF so that it has a certain number of bytes.
+--
+-- TODO: jml cannot remember why you might want to call this.
+expandPassword :: ByteArray output => Password -> Int -> output
+expandPassword (Password bytes) numBytes = expandData info bytes numBytes
+  where
+    -- This needs to be exactly "SPAKE2 pw"
+    -- See <https://github.com/bitwiseshiftleft/sjcl/pull/273/#issuecomment-185251593>
+    info = "SPAKE2 pw"
 
 -- | Use a bytestring to deterministically generate a element on a group.
 generateArbitraryElement :: group -> seed -> Element group
@@ -381,9 +392,3 @@ createSessionKey Protocol{group, hashAlgorithm, relation} x y k (Password passwo
     symmetricElements =
       let [ firstMessage, secondMessage ] = sort [ encodeElement group x, encodeElement group y ]
       in firstMessage <> secondMessage
-
--- | Expand a password using HKDF so that it has a certain number of bytes.
---
--- TODO: jml cannot remember why you might want to call this.
-expandPassword :: (ByteArrayAccess bytes, ByteArray output) => Password -> Int -> output
-expandPassword (Password bytes) numBytes = expandData "SPAKE2 password" bytes numBytes
