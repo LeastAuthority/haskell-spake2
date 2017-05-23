@@ -164,6 +164,8 @@ module Crypto.Spake2
   , formatError
   , elementToMessage
   , createSessionKey
+  , SideID(..)
+  , WhichSide(..)
   -- * Exported to prevent unused warnings
   , expandPassword
   , generateArbitraryElement

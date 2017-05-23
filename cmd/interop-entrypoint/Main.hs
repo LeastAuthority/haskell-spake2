@@ -15,18 +15,23 @@
 
 module Main (main) where
 
-import Protolude
+import Protolude hiding (group)
 
-import Crypto.Hash (SHA256)
+import Crypto.Hash (SHA256(..))
 import Options.Applicative
 import System.IO (hGetLine, hPutStrLn)
 
+import qualified Crypto.Spake2 as Spake2
 import Crypto.Spake2
   ( Password
   , Protocol
+  , SideID(..)
+  , makeSymmetricProtocol
+  , makeAsymmetricProtocol
   , createSessionKey
   , makePassword
   , computeOutboundMessage
+  , generateArbitraryElement
   , generateKeyMaterial
   , extractElement
   , startSpake2
@@ -89,8 +94,20 @@ runInteropTest protocol password inH outH = do
 
 
 makeProtocolFromSide :: Side -> Protocol IntegerAddition SHA256
-makeProtocolFromSide _side = notImplemented
-
+makeProtocolFromSide side =
+  case side of
+    SideA -> makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideA
+    SideB -> makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideB
+    Symmetric -> makeSymmetricProtocol hashAlg group s idSymmetric
+  where
+    hashAlg = SHA256
+    group = IntegerAddition 7
+    m = generateArbitraryElement group ("m" :: ByteString)
+    n = generateArbitraryElement group ("n" :: ByteString)
+    s = generateArbitraryElement group ("s" :: ByteString)
+    idA = SideID ""
+    idB = SideID ""
+    idSymmetric = SideID ""
 
 main :: IO ()
 main = do
