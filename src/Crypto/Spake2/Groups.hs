@@ -37,9 +37,6 @@ module Crypto.Spake2.Groups
   , scalarSizeBytes
   , KeyPair(..)
   , IntegerAddition(..)
-  , IntegerGroup
-  , arbitraryElement
-  , bytesToElement
   , expandArbitraryElementSeed
     -- * Utilities
   , expandData
@@ -50,7 +47,7 @@ import Protolude hiding (group, length)
 import Crypto.Error (CryptoFailable(..))
 import Crypto.Hash.Algorithms (SHA256)
 import qualified Crypto.KDF.HKDF as HKDF
-import Crypto.Number.Basic (numBytes)
+import Crypto.Number.Basic (numBits)
 import Crypto.Number.ModArithmetic (expSafe)
 import Crypto.Number.Serialize (i2osp, os2ip)
 import Crypto.Random.Types (MonadRandom(..))
@@ -134,12 +131,28 @@ class Group group where
   -- | Generate a new random element of the group, with corresponding scalar.
   generateElement :: MonadRandom randomly => group -> randomly (KeyPair group)
 
+  -- | Size of elements, in bits
+  elementSizeBits :: group -> Int
+
   -- | Size of scalars, in bits
   scalarSizeBits :: group -> Int
 
+  -- | Deterministically create an arbitrary element from a seed bytestring.
+  --
+  -- __XXX__: jml would much rather this take a scalar, an element, or even an integer, rather than bytes
+  -- because bytes mean that the group instances have to know about hash algorithms and HKDF.
+  -- If the IntegerGroup class in SPAKE2 also oversized its input,
+  -- then it and the ed25519 implementation would have identical decoding.
+  arbitraryElement :: ByteArrayAccess bytes => group -> bytes -> Element group
 
+
+-- | Map some arbitrary bytes into a scalar in a group.
 decodeScalar :: (ByteArrayAccess bytes, Group group) => group -> bytes -> Scalar group
 decodeScalar group bytes = integerToScalar group (os2ip bytes)
+
+-- | Size of elements in a group, in bits.
+elementSizeBytes :: Group group => group -> Int
+elementSizeBytes group = elementSizeBits group + 7 `div` 8
 
 -- | Size of scalars in a group, in bytes.
 scalarSizeBytes :: Group group => group -> Int
@@ -192,6 +205,9 @@ These include:
 -- TODO: Would be nice to put all the group definitions into other modules and
 -- leave this as being a pure interface module
 
+-- | Simple integer addition group.
+--
+-- Do __NOT__ use this for anything cryptographic.
 newtype IntegerAddition = IntegerAddition { modulus :: Integer } deriving (Eq, Ord, Show)
 
 instance Group IntegerAddition where
@@ -207,57 +223,19 @@ instance Group IntegerAddition where
   scalarToInteger _ x = x
   encodeElement _ = i2osp
   decodeElement _ bytes = CryptoPassed (os2ip bytes)
-  generateElement _ = notImplemented
-  scalarSizeBits _ = 64  -- XXX: Incorrect value
+  generateElement group = do
+    scalarBytes <- getRandomBytes (scalarSizeBytes group)
+    let scalar = decodeScalar group (scalarBytes :: ByteString)
+    let element = scalarMultiply group scalar (groupIdentity group)
+    pure (KeyPair element scalar)
+  scalarSizeBits group = numBits (modulus group)  -- XXX: Incorrect value. Not sure what it should be.
+  elementSizeBits group = numBits (modulus group) -- XXX: should be size of subgroup
+  arbitraryElement group seed =
+    let processedSeed = expandArbitraryElementSeed seed (elementSizeBytes group) :: ByteString
+        r = (modulus group - 1) `div` modulus group -- XXX: should be size of subgroup
+        h = os2ip processedSeed `mod` modulus group
+    in expSafe h r (modulus group)
 
-
-data Error bytes
-  = WrongSize bytes Int
-  | WrongGroup bytes IntegerGroup
-  | NotInField bytes Integer
-  deriving (Eq, Ord, Show)
-
--- | Definitely about integers, but jml is not entirely sure why it's called a
--- group, since there's no inversion function, and since it also has scalar
--- multiplier.
-data IntegerGroup
-  = IntegerGroup
-  { order :: Integer
-  , fieldSize :: Integer
-  , _generator :: Integer
-  } deriving (Eq, Ord, Show)
-
-type Bytes = Int  -- XXX: I guess this should be some sort of unsigned
-
-elementSizeBytes :: IntegerGroup -> Bytes
-elementSizeBytes group = numBytes (fieldSize group)
-
--- | An element of a group. It's up to you to remember which group this
--- element came from.
-newtype ElementThing = Element Integer deriving (Eq, Ord, Show)
-
-
-arbitraryElement :: ByteArrayAccess ikm => IntegerGroup -> ikm -> ElementThing
-arbitraryElement group@IntegerGroup{order, fieldSize} seed =
-  let processedSeed = expandArbitraryElementSeed seed (elementSizeBytes group) :: ByteString
-      r = (order - 1) `div` fieldSize
-      h = os2ip processedSeed `mod` order
-  in Element (expSafe h r order)
-
-
-bytesToElement :: ByteArrayAccess bytes => IntegerGroup -> bytes -> Either (Error bytes) ElementThing
-bytesToElement group@IntegerGroup{order} bytes = do
-  unless (length bytes == size) $ throwError (WrongSize bytes size)
-  let i = os2ip bytes
-  unless (0 < i && i < order) $ throwError (NotInField bytes order)
-  let element = Element i
-  unless (isMember group element) $ throwError (WrongGroup bytes group)
-  pure element
-  where
-    size = elementSizeBytes group
-
-isMember :: IntegerGroup -> ElementThing -> Bool
-isMember IntegerGroup{order, fieldSize} (Element i) = expSafe i fieldSize order == 1
 
 -- | Take an arbitrary sequence of bytes and expand it to be the given number
 -- of bytes. Do this by extracting a pseudo-random key and expanding it using

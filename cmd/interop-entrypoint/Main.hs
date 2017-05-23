@@ -32,7 +32,6 @@ import Crypto.Spake2
   , createSessionKey
   , makePassword
   , computeOutboundMessage
-  , generateArbitraryElement
   , generateKeyMaterial
   , extractElement
   , startSpake2
@@ -113,9 +112,9 @@ makeProtocolFromSide side =
   where
     hashAlg = SHA256
     group = IntegerAddition 7
-    m = generateArbitraryElement group ("m" :: ByteString)
-    n = generateArbitraryElement group ("n" :: ByteString)
-    s = generateArbitraryElement group ("s" :: ByteString)
+    m = arbitraryElement group ("m" :: ByteString)
+    n = arbitraryElement group ("n" :: ByteString)
+    s = arbitraryElement group ("s" :: ByteString)
     idA = SideID ""
     idB = SideID ""
     idSymmetric = SideID ""

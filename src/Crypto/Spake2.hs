@@ -166,9 +166,6 @@ module Crypto.Spake2
   , createSessionKey
   , SideID(..)
   , WhichSide(..)
-  -- * Exported to prevent unused warnings
-  , expandPassword
-  , generateArbitraryElement
   ) where
 
 import Protolude hiding (group)
@@ -218,10 +215,6 @@ expandPassword (Password bytes) numBytes = expandData info bytes numBytes
     -- This needs to be exactly "SPAKE2 pw"
     -- See <https://github.com/bitwiseshiftleft/sjcl/pull/273/#issuecomment-185251593>
     info = "SPAKE2 pw"
-
--- | Use a bytestring to deterministically generate a element on a group.
-generateArbitraryElement :: group -> seed -> Element group
-generateArbitraryElement = notImplemented
 
 -- | Turn an element into a message from this side of the protocol.
 elementToMessage :: Group group => Protocol group hashAlgorithm -> Element group -> ByteString
