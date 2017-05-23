@@ -181,6 +181,7 @@ both sides.
 module Crypto.Spake2
   ( something
   , Password
+  , makePassword
   , Protocol
   , makeAsymmetricProtocol
   , makeSymmetricProtocol
@@ -205,7 +206,16 @@ something :: a -> a
 something x = x
 
 -- | Shared secret password used to negotiate the connection.
+--
+-- Constructor deliberately not exported,
+-- so that once a 'Password' has been created, the actual password cannot be retrieved by other modules.
+--
+-- Construct with 'makePassword'.
 newtype Password = Password ByteString deriving (Eq, Ord)
+
+-- | Construct a password.
+makePassword :: ByteString -> Password
+makePassword = Password
 
 -- | Bytes that identify a side of the protocol
 newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)

@@ -31,6 +31,53 @@ Right now, you don't—it doesn't work.
 
 If you want to know more, check out the `main module documentation <src/Crypto/Spake2.hs>`_.
 
+Testing for interoperability
+----------------------------
+
+Requires the `LeastAuthority interoperability harness <https://github.com/leastauthority/spake2-interop-test>`_.
+
+Assumes that haskell-spake2 has been compiled (``stack build`` will do it)
+and that you know where the executable lives (``stack install`` might be helpful here).
+
+.. these instructions are not yet verified
+
+To show that Python works as Side A and Haskell works as Side B:
+
+.. code-block:: console
+
+   $ runhaskell TestInterop.hs ./python-spake2-interop-entrypoint.hs A abc -- /path/to/haskell-spake2-interop-entrypoint B abc
+   ["./python-spake2-interop-entrypoint.py","A","abc"]
+   ["/path/to/haskell-spake2-interop-entrypoint","B","abc"]
+   A's key: 8a2e19664f0a2bc6e446d2c44900c67604fe42f6d7e0a1328a5253b21f4131a5
+   B's key: 8a2e19664f0a2bc6e446d2c44900c67604fe42f6d7e0a1328a5253b21f4131a5
+   Session keys match.
+
+**Note**: if you want to run ``runhaskell`` with ``stack``,
+you will need to invoke it like::
+
+   stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.hs A abc -- /path/to/haskell-spake2-interop-entrypoint B abc
+
+Current results look like:
+
+.. code-block:: console
+
+   $ runhaskell TestInterop.hs ./python-spake2-interop-entrypoint.py A abc -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
+   ["./python-spake2-interop-entrypoint.py","A","abc"]
+   ["/Users/jml/.local/bin/haskell-spake2-interop-entrypoint","B","abc"]
+   haskell-spake2-interop-entrypoint: Not implemented
+   CallStack (from HasCallStack):
+   error, called at src/Debug.hs:62:18 in protolude-0.1.10-6KZ4RB9zWepBfYwAkgb4xb:Debug
+   Traceback (most recent call last):
+     File "./python-spake2-interop-entrypoint.py", line 22, in <module>
+       msg_in = raw_input().decode("hex")
+     File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/hex_codec.py", line 42, in hex_decode
+       output = binascii.a2b_hex(input)
+   TypeError: Odd-length string
+   TestInterop.hs: fd:16: hFlush: resource vanished (Broken pipe)
+
+Which is why we say that haskell-spake2 doesn't work.
+
+
 Contributing
 ============
 

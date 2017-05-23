@@ -20,6 +20,16 @@ dependencies:
   - base >= 4.9 && < 5
   - protolude
 
+executables:
+  haskell-spake2-interop-entrypoint:
+    main: Main.hs
+    ghc-options: -threaded
+    source-dirs: cmd/interop-entrypoint
+    dependencies:
+      - spake2
+      - cryptonite
+      - optparse-applicative
+
 library:
   source-dirs: src
   dependencies:
