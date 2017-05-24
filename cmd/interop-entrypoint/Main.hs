@@ -92,7 +92,6 @@ runInteropTest protocol password inH outH = do
           output sessionKey
 
   where
-    -- TODO: Somehow hex encode like Python
     output message = do
       hPutStrLn outH (toS (Base16.encode message))
       hFlush outH
@@ -112,9 +111,9 @@ makeProtocolFromSide side =
   where
     hashAlg = SHA256
     group = i1024
-    m = arbitraryElement group ("m" :: ByteString)
-    n = arbitraryElement group ("n" :: ByteString)
-    s = arbitraryElement group ("s" :: ByteString)
+    m = arbitraryElement group ("M" :: ByteString)
+    n = arbitraryElement group ("N" :: ByteString)
+    s = arbitraryElement group ("S" :: ByteString)
     idA = SideID ""
     idB = SideID ""
     idSymmetric = SideID ""

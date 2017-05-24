@@ -173,7 +173,8 @@ import Protolude hiding (group)
 import Crypto.Error (CryptoError, CryptoFailable(..))
 import Crypto.Hash (HashAlgorithm, hashWith)
 import Crypto.Random.Types (MonadRandom(..))
-import Data.ByteArray (ByteArray, ByteArrayAccess)
+import Data.ByteArray (ByteArrayAccess, ByteArray)
+import qualified Data.ByteArray as ByteArray
 import qualified Data.ByteString as ByteString
 
 import Crypto.Spake2.Groups (Group(..), decodeScalar, scalarSizeBytes)
@@ -365,8 +366,11 @@ createSessionKey Protocol{group, hashAlgorithm, relation} x y k (Password passwo
   hashDigest transcript
 
   where
+    -- The protocol expects that when we include the hash of various
+    -- components (e.g. the password) as input for the session key hash,
+    -- that we use the *byte* representation of these elements.
     hashDigest :: ByteArrayAccess input => input -> ByteString
-    hashDigest thing = show (hashWith hashAlgorithm thing)
+    hashDigest thing = ByteArray.convert (hashWith hashAlgorithm thing)
 
     transcript =
       case relation of

@@ -7,8 +7,8 @@ Implementation of SPAKE2 key exchange protocol.
 Status
 ======
 
-Doesn't actually work.
-We are in the middle of implementing it.
+Working implementation of I1024 that interoperates with python-spake2.
+No other groups implemented.
 
 Goals
 =====
@@ -27,7 +27,7 @@ Right now:
 How to use it
 =============
 
-Right now, you don't—it doesn't work.
+Right now, you don't—it only barely works.
 
 If you want to know more, check out the `main module documentation <src/Crypto/Spake2.hs>`_.
 
@@ -64,22 +64,12 @@ Current results look like:
    $ stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.py A abc I1024 -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
    ["./python-spake2-interop-entrypoint.py","A","abc","I1024"]
    ["/Users/jml/.local/bin/haskell-spake2-interop-entrypoint","B","abc"]
-   ERROR: Could not handle incoming message (line = "41be2536123b82bf6fbbeea139c6fae759774c34833d3f43a0f9dda50fd7138bfc", msgBytes = "A\190%6\DC2;\130\191o\187\238\161\&9\198\250\231YwL4\131=?C\160\249\221\165\SI\215\DC3\139\252"): Could not decode message ("\190%6\DC2;\130\191o\187\238\161\&9\198\250\231YwL4\131=?C\160\249\221\165\SI\215\DC3\139\252") to element: CryptoError_PointCoordinatesInvalid
-   Traceback (most recent call last):
-     File "./python-spake2-interop-entrypoint.py", line 47, in <module>
-       key = s.finish(msg_in)
-     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/spake2.py", line 108, in finish
-       inbound_elem = g.bytes_to_element(self.inbound_message)
-     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/ed25519_group.py", line 16, in bytes_to_element
-       return ed25519_basic.bytes_to_element(b)
-     File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/ed25519_basic.py", line 348, in bytes_to_element
-       raise ValueError("element is not in the right group")
-   ValueError: element is not in the right group
-   TestInterop.hs: fd:15: hGetLine: end of file
+   A's key: 6fd01a051c7f9b883038523a3d70ec1f9a53e517292dd1d3080c9e040760d575
+   B's key: 6fd01a051c7f9b883038523a3d70ec1f9a53e517292dd1d3080c9e040760d575
+   Session keys match.
 
-Which probably indicates that either our group implementation or our serialization differs.
-Which is why we say that haskell-spake2 doesn't work.
-
+Which demonstrates that the Haskell SPAKE2 implementation *does* work,
+as long as you are using the I1024 group (which is very much not the default).
 
 Contributing
 ============

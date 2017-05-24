@@ -35,7 +35,9 @@ expandData info input size =
 -- | Given a seed value for an arbitrary element (see 'arbitraryElement'),
 -- expand it to be of the given length.
 expandArbitraryElementSeed :: (ByteArrayAccess ikm, ByteArray out) => ikm -> Int -> out
-expandArbitraryElementSeed = expandData "SPAKE 2 arbitrary element"
+expandArbitraryElementSeed =
+  -- NOTE: This must be exactly this string in order to interoperate with python-spake2
+  expandData "SPAKE2 arbitrary element"
 
 
 -- | Serialize a number according to the SPAKE2 protocol.
