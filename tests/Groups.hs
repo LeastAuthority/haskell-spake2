@@ -4,26 +4,34 @@ module Groups (tests) where
 
 import Protolude hiding (group)
 
+import Crypto.Number.Serialize (i2osp)
 import Crypto.Error (CryptoFailable(..))
 import GHC.Base (String)
 import Test.QuickCheck (Gen, arbitrary, forAll, property)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (Spec, testSpec, describe, it)
 
-import Crypto.Spake2.Groups (Group(..), IntegerAddition(..))
+import Crypto.Spake2.Groups (Group(..), IntegerAddition(..), IntegerGroup(..), i1024)
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do
-  groupProperties "integer addition modulo 7" (IntegerAddition 7) makeElement makeScalar
+  groupProperties "integer addition modulo 7" (IntegerAddition 7) (makeElement (IntegerAddition 7)) makeScalar
+  groupProperties "integer group" i1024 (makeElement i1024) makeI1024Scalar
 
-
-makeElement :: Gen (Element IntegerAddition)
-makeElement = do
-  i <- arbitrary
-  pure $ i `mod` 7
 
 makeScalar :: Gen (Scalar IntegerAddition)
 makeScalar = arbitrary
+
+makeElement :: Group group => group -> Gen (Element group)
+makeElement group = do
+  i <- arbitrary
+  let bytes = i2osp i :: ByteString
+  pure $ arbitraryElement group bytes
+
+makeI1024Scalar :: Gen (Scalar IntegerGroup)
+makeI1024Scalar = do
+  i <- arbitrary
+  pure $ i `mod` subgroupOrder i1024
 
 groupProperties
   :: (Group group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
@@ -58,8 +66,11 @@ groupProperties name group elements scalars = describe name $ do
   it "scalar to integer roundtrips" $ property $
     forAll scalars $ \n -> integerToScalar group (scalarToInteger group n) == n
 
-  it "integer to scalar roundtrips" $ property $
-    \i -> scalarToInteger group (integerToScalar group i) == i
+  it "integer to scalar conversion" $ property $
+    -- Doesn't roundtrip per se, because negative integers (for example) get
+    -- turned into scalars within the subgroup range, losing the original
+    -- information.
+    \i -> integerToScalar group (scalarToInteger group (integerToScalar group i)) == integerToScalar group i
 
   it "scalar multiply by 0 is identity" $ property $
     forAll elements $ \x -> scalarMultiply group (integerToScalar group 0) x == groupIdentity group

@@ -61,11 +61,12 @@ Current results look like:
 
 .. code-block:: console
 
-   $ stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.py A abc -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
-   ["./python-spake2-interop-entrypoint.py","A","abc"]
+   $ stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.py A abc I1024 -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
+   ["./python-spake2-interop-entrypoint.py","A","abc","I1024"]
    ["/Users/jml/.local/bin/haskell-spake2-interop-entrypoint","B","abc"]
+   ERROR: Could not handle incoming message (line = "41be2536123b82bf6fbbeea139c6fae759774c34833d3f43a0f9dda50fd7138bfc", msgBytes = "A\190%6\DC2;\130\191o\187\238\161\&9\198\250\231YwL4\131=?C\160\249\221\165\SI\215\DC3\139\252"): Could not decode message ("\190%6\DC2;\130\191o\187\238\161\&9\198\250\231YwL4\131=?C\160\249\221\165\SI\215\DC3\139\252") to element: CryptoError_PointCoordinatesInvalid
    Traceback (most recent call last):
-     File "./python-spake2-interop-entrypoint.py", line 28, in <module>
+     File "./python-spake2-interop-entrypoint.py", line 47, in <module>
        key = s.finish(msg_in)
      File "/Users/jml/Library/Python/2.7/lib/python/site-packages/spake2/spake2.py", line 108, in finish
        inbound_elem = g.bytes_to_element(self.inbound_message)
@@ -76,7 +77,7 @@ Current results look like:
    ValueError: element is not in the right group
    TestInterop.hs: fd:15: hGetLine: end of file
 
-Which indicates that we are using the wrong group.
+Which probably indicates that either our group implementation or our serialization differs.
 Which is why we say that haskell-spake2 doesn't work.
 
 
