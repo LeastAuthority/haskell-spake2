@@ -49,11 +49,14 @@ import Crypto.Error (CryptoFailable(..), CryptoError(..))
 import Crypto.Number.Basic (numBits)
 import Crypto.Number.Generate (generateMax)
 import Crypto.Number.ModArithmetic (expSafe)
-import Crypto.Number.Serialize (i2osp, os2ip, i2ospOf_)
 import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess(..))
 
-import Crypto.Spake2.Util (expandArbitraryElementSeed)
+import Crypto.Spake2.Util
+  ( expandArbitraryElementSeed
+  , bytesToNumber
+  , unsafeNumberToBytes
+  )
 
 
 -- | A mathematical group intended to be used with SPAKE2.
@@ -150,7 +153,7 @@ class Group group where
 
 -- | Map some arbitrary bytes into a scalar in a group.
 decodeScalar :: (ByteArrayAccess bytes, Group group) => group -> bytes -> Scalar group
-decodeScalar group bytes = integerToScalar group (os2ip bytes)
+decodeScalar group bytes = integerToScalar group (bytesToNumber bytes)
 
 -- | Size of elements in a group, in bits.
 elementSizeBytes :: Group group => group -> Int
@@ -223,8 +226,8 @@ instance Group IntegerAddition where
   scalarMultiply group n x = (n * x) `mod` modulus group
   integerToScalar _ x = x
   scalarToInteger _ x = x
-  encodeElement _ = i2osp
-  decodeElement _ bytes = CryptoPassed (os2ip bytes)
+  encodeElement group x = unsafeNumberToBytes (elementSizeBytes group) (x `mod` modulus group)
+  decodeElement _ bytes = CryptoPassed (bytesToNumber bytes)
   generateElement group = do
     scalarBytes <- getRandomBytes (scalarSizeBytes group)
     let scalar = decodeScalar group (scalarBytes :: ByteString)
@@ -235,7 +238,7 @@ instance Group IntegerAddition where
   arbitraryElement group seed =
     let processedSeed = expandArbitraryElementSeed seed (elementSizeBytes group) :: ByteString
         r = (modulus group - 1) `div` modulus group -- XXX: should be size of subgroup
-        h = os2ip processedSeed `mod` modulus group
+        h = bytesToNumber processedSeed `mod` modulus group
     in expSafe h r (modulus group)
 
 
@@ -271,9 +274,9 @@ instance Group IntegerGroup where
   scalarMultiply group n x = expSafe x (n `mod` subgroupOrder group) (order group)
   integerToScalar group x = x `mod` subgroupOrder group  -- XXX: Should we instead fail?
   scalarToInteger _ n = n
-  encodeElement group = i2ospOf_ (elementSizeBytes group)
+  encodeElement group = unsafeNumberToBytes (elementSizeBytes group)
   decodeElement group bytes =
-    case os2ip bytes of
+    case bytesToNumber bytes of
       x
         | x <= 0 || x >= order group -> CryptoFailed CryptoError_PointSizeInvalid
         | expSafe x (subgroupOrder group) (order group) /= groupIdentity group -> CryptoFailed CryptoError_PointCoordinatesInvalid
@@ -287,7 +290,7 @@ instance Group IntegerGroup where
   arbitraryElement group seed =
     let processedSeed = expandArbitraryElementSeed seed (elementSizeBytes group) :: ByteString
         r = (order group - 1) `div` subgroupOrder group
-        h = os2ip processedSeed `mod` order group
+        h = bytesToNumber processedSeed `mod` order group
     in expSafe h r (order group)
 
 i1024 :: IntegerGroup
