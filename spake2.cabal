@@ -37,6 +37,7 @@ library
       Crypto.Spake2
       Crypto.Spake2.Groups
       Crypto.Spake2.Math
+      Crypto.Spake2.Util
   default-language: Haskell2010
 
 executable haskell-spake2-interop-entrypoint

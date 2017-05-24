@@ -37,21 +37,18 @@ module Crypto.Spake2.Groups
   , scalarSizeBytes
   , KeyPair(..)
   , IntegerAddition(..)
-  , expandArbitraryElementSeed
-    -- * Utilities
-  , expandData
   ) where
 
 import Protolude hiding (group, length)
 
 import Crypto.Error (CryptoFailable(..))
-import Crypto.Hash.Algorithms (SHA256)
-import qualified Crypto.KDF.HKDF as HKDF
 import Crypto.Number.Basic (numBits)
 import Crypto.Number.ModArithmetic (expSafe)
 import Crypto.Number.Serialize (i2osp, os2ip)
 import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess(..))
+
+import Crypto.Spake2.Util (expandArbitraryElementSeed)
 
 
 -- | A mathematical group intended to be used with SPAKE2.
@@ -235,22 +232,3 @@ instance Group IntegerAddition where
         r = (modulus group - 1) `div` modulus group -- XXX: should be size of subgroup
         h = os2ip processedSeed `mod` modulus group
     in expSafe h r (modulus group)
-
-
--- | Take an arbitrary sequence of bytes and expand it to be the given number
--- of bytes. Do this by extracting a pseudo-random key and expanding it using
--- HKDF.
-expandData :: (ByteArrayAccess input, ByteArray output) => ByteString -> input -> Int -> output
-expandData info input size =
-  HKDF.expand prk info size
-  where
-    prk :: HKDF.PRK SHA256
-    prk = HKDF.extract salt input
-
-    -- XXX: I'm no crypto expert, but hard-coding an empty string as a salt
-    -- seems kind of weird.
-    salt :: ByteString
-    salt = ""
-
-expandArbitraryElementSeed :: (ByteArrayAccess ikm, ByteArray out) => ikm -> Int -> out
-expandArbitraryElementSeed = expandData "SPAKE 2 arbitrary element"

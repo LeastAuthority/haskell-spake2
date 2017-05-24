@@ -176,8 +176,9 @@ import Crypto.Random.Types (MonadRandom(..))
 import Data.ByteArray (ByteArray, ByteArrayAccess)
 import qualified Data.ByteString as ByteString
 
-import Crypto.Spake2.Groups (Group(..), decodeScalar, expandData, scalarSizeBytes)
+import Crypto.Spake2.Groups (Group(..), decodeScalar, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
+import Crypto.Spake2.Util (expandData)
 
 
 -- | Do-nothing function so that we have something to import in our tests.
