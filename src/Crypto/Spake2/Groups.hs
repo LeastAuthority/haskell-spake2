@@ -1,8 +1,8 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-|
 Module: Crypto.Spake2.Groups
-Description: Implementation for mathematical groups
+Description: Implementation of various mathematical groups
+
+Each of these implements the 'Crypto.Spake2.Group.Group' typeclass.
 -}
 module Crypto.Spake2.Groups
   ( IntegerGroup.IntegerGroup(..)

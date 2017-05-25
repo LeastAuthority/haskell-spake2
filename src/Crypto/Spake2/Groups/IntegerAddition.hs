@@ -1,9 +1,10 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-|
 Module: Crypto.Spake2.Groups
-Description: Implementation for mathematical groups
+Description: Additive group of integers modulo \(n\)
 
+Do __NOT__ use this for anything cryptographic.
 -}
 module Crypto.Spake2.Groups.IntegerAddition
   ( IntegerAddition(..)

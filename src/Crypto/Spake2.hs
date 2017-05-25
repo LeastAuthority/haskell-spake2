@@ -163,13 +163,22 @@ elementToMessage protocol element = prefix <> encodeElement (group protocol) ele
         Asymmetric{us=SideA} -> "A"
         Asymmetric{us=SideB} -> "B"
 
-
+-- | An error that occurs when interpreting messages from the other side of the exchange.
 data MessageError
-  = EmptyMessage
+  = EmptyMessage -- ^ We received an empty bytestring.
   | UnexpectedPrefix Word8 Word8
+    -- ^ The bytestring had an unexpected prefix.
+    -- We expect the prefix to be @A@ if the other side is side A,
+    -- @B@ if they are side B,
+    -- or @S@ if the connection is symmetric.
+    -- First argument is received prefix, second is expected.
   | BadCrypto CryptoError ByteString
+    -- ^ Message could not be decoded to an element of the group.
+    -- This can indicate either an error in serialization logic,
+    -- or in mathematics.
   deriving (Eq, Show)
 
+-- | Turn a 'MessageError' into human-readable text.
 formatError :: MessageError -> Text
 formatError EmptyMessage = "Other side sent us an empty message"
 formatError (UnexpectedPrefix got expected) = "Other side claims to be " <> show (chr (fromIntegral got)) <> ", expected " <> show (chr (fromIntegral expected))
@@ -228,7 +237,8 @@ theirPrefix relation =
 -- | Everything required for the SPAKE2 protocol.
 --
 -- Both sides must agree on these values for the protocol to work.
--- This /mostly/ means value equality, except for 'us', where each side must have complementary (sp?) values.
+-- This /mostly/ means value equality, except for 'Relation.us',
+-- where each side must have complementary values.
 --
 -- Construct with 'makeAsymmetricProtocol' or 'makeSymmetricProtocol'.
 data Protocol group hashAlgorithm
@@ -278,6 +288,7 @@ getParams Protocol{group, relation} =
       , Math.theirBlind = blind theirs
       }
 
+-- | Commence a SPAKE2 exchange.
 startSpake2
   :: (MonadRandom randomly, Group group)
   => Protocol group hashAlgorithm

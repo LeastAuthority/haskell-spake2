@@ -1,3 +1,7 @@
+{-|
+Module: Crypto.Spake2.Util
+Description: Miscellany. Mostly to do with serialization.
+-}
 module Crypto.Spake2.Util
   ( expandData
   , expandArbitraryElementSeed

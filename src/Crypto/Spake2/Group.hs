@@ -1,5 +1,4 @@
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-|
 Module: Crypto.Spake2.Group
 Description: Interface for mathematical groups
@@ -23,6 +22,7 @@ import Crypto.Spake2.Util (bytesToNumber)
 -- | A mathematical group intended to be used with SPAKE2.
 --
 -- Notes:
+--
 --  * This is a much richer interface than one would expect from a group purely derived from abstract algebra
 --  * jml thinks this is relevant to all Diffie-Hellman cryptography,
 --    but too ignorant to say for sure

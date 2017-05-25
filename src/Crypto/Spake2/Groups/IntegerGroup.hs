@@ -1,9 +1,9 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TypeFamilies #-}
 {-|
-Module: Crypto.Spake2.Groups
-Description: Implementation for mathematical groups
-
+Module: Crypto.Spake2.Groups.IntegerGroup
+Description: Multiplicative group of integers modulo \(n\)
 -}
 module Crypto.Spake2.Groups.IntegerGroup
   ( IntegerGroup(order, subgroupOrder)
@@ -82,6 +82,10 @@ instance Group IntegerGroup where
         h = bytesToNumber processedSeed `mod` p
     in expSafe h r p
 
+-- | 1024 bit integer group.
+--
+-- Originally from http://haofeng66.googlepages.com/JPAKEDemo.java,
+-- via [python-spake2](https://github.com/warner/python-spake2).
 i1024 :: IntegerGroup
 i1024 =
   IntegerGroup
