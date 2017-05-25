@@ -11,7 +11,8 @@ import Test.QuickCheck (Gen, arbitrary, forAll, property)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (Spec, testSpec, describe, it)
 
-import Crypto.Spake2.Groups (Group(..), IntegerAddition(..), IntegerGroup(..), i1024)
+import Crypto.Spake2.Group (Group(..))
+import Crypto.Spake2.Groups (IntegerAddition(..), IntegerGroup(..), i1024)
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do

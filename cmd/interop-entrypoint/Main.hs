@@ -38,7 +38,8 @@ import Crypto.Spake2
   , elementToMessage
   , formatError
   )
-import Crypto.Spake2.Groups (Group(..), IntegerGroup, i1024)
+import Crypto.Spake2.Group (Group(..))
+import Crypto.Spake2.Groups (IntegerGroup, i1024)
 
 
 data Config = Config Side Password deriving (Eq, Ord)

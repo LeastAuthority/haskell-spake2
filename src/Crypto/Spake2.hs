@@ -112,7 +112,7 @@ import Data.ByteArray (ByteArrayAccess, ByteArray)
 import qualified Data.ByteArray as ByteArray
 import qualified Data.ByteString as ByteString
 
-import Crypto.Spake2.Groups (Group(..), decodeScalar, scalarSizeBytes)
+import Crypto.Spake2.Group (Group(..), decodeScalar, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
 import Crypto.Spake2.Util (expandData)
 

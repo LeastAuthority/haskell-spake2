@@ -35,6 +35,7 @@ library
     , memory
   exposed-modules:
       Crypto.Spake2
+      Crypto.Spake2.Group
       Crypto.Spake2.Groups
       Crypto.Spake2.Math
       Crypto.Spake2.Util

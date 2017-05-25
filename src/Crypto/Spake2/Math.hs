@@ -103,7 +103,7 @@ import Protolude hiding (group)
 
 import Crypto.Random.Types (MonadRandom(..))
 
-import Crypto.Spake2.Groups (Group(..), KeyPair(..))
+import Crypto.Spake2.Group (Group(..), KeyPair(..))
 
 -- | The parameters of the SPAKE2 protocol. The other side needs to be using
 -- the same values, but with swapped values for 'ourBlind' and 'theirBlind'.
