@@ -5,9 +5,9 @@
 --
 -- Any entry point for the harness needs to:
 --  - take everything it needs as command-line parameters
---  - print the outbound message to stdout
---  - read the inbound message from stdin
---  - print the session key
+--  - print the outbound message to stdout, base16-encoded
+--  - read the inbound message from stdin, base16-encoded
+--  - print the session key, base16-encoded
 --  - terminate
 --
 -- Much of the code in here will probably move to the library as we figure out
