@@ -37,6 +37,8 @@ library
       Crypto.Spake2
       Crypto.Spake2.Group
       Crypto.Spake2.Groups
+      Crypto.Spake2.Groups.IntegerAddition
+      Crypto.Spake2.Groups.IntegerGroup
       Crypto.Spake2.Math
       Crypto.Spake2.Util
   default-language: Haskell2010
