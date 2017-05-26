@@ -26,7 +26,7 @@ library
   hs-source-dirs:
       src
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror
+  ghc-options: -Wall -Werror -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
     , protolude
@@ -37,6 +37,7 @@ library
       Crypto.Spake2
       Crypto.Spake2.Group
       Crypto.Spake2.Groups
+      Crypto.Spake2.Groups.Ed25519
       Crypto.Spake2.Groups.IntegerAddition
       Crypto.Spake2.Groups.IntegerGroup
       Crypto.Spake2.Math
@@ -48,7 +49,7 @@ executable haskell-spake2-interop-entrypoint
   hs-source-dirs:
       cmd/interop-entrypoint
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror -threaded
+  ghc-options: -Wall -Werror -Wno-type-defaults -threaded
   build-depends:
       base >= 4.9 && < 5
     , protolude
@@ -64,7 +65,7 @@ test-suite tasty
   hs-source-dirs:
       tests
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror
+  ghc-options: -Wall -Werror -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
     , protolude
