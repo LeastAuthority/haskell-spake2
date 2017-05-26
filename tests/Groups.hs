@@ -16,23 +16,19 @@ import Crypto.Spake2.Groups (IntegerAddition(..), IntegerGroup(..), i1024)
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do
-  groupProperties "integer addition modulo 7" (IntegerAddition 7) (makeElement (IntegerAddition 7)) makeScalar
-  groupProperties "integer group" i1024 (makeElement i1024) makeI1024Scalar
+  groupProperties "integer addition modulo 7" (IntegerAddition 7) (makeElement (IntegerAddition 7)) (makeScalar 7)
+  groupProperties "integer group" i1024 (makeElement i1024) (makeScalar (subgroupOrder i1024))
 
-
-makeScalar :: Gen (Scalar IntegerAddition)
-makeScalar = arbitrary
+makeScalar :: Integer -> Gen Integer
+makeScalar k = do
+  i <- arbitrary
+  pure $ i `mod` k
 
 makeElement :: Group group => group -> Gen (Element group)
 makeElement group = do
   i <- arbitrary
   let bytes = i2osp i :: ByteString
   pure $ arbitraryElement group bytes
-
-makeI1024Scalar :: Gen (Scalar IntegerGroup)
-makeI1024Scalar = do
-  i <- arbitrary
-  pure $ i `mod` subgroupOrder i1024
 
 groupProperties
   :: (Group group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
