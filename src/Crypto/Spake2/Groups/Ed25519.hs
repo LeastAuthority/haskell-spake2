@@ -67,13 +67,13 @@ instance Group Ed25519 where
 
   elementAdd _ x y = addExtendedPoints x y
   elementNegate group = scalarMultiply group (l - 1)
-  groupIdentity _ = Zero
+  groupIdentity _ = assertInGroup extendedZero
   scalarMultiply _ n x = safeScalarMultiply n x
 
   integerToScalar _ x = x
   scalarToInteger _ x = x
 
-  encodeElement _ x = encodeAffinePoint (extendedToAffine x)
+  encodeElement _ x = encodeAffinePoint (extendedToAffine' x)
   decodeElement _ bytes = toCryptoFailable $ do
     affine <- decodeAffinePoint bytes
     let extended = affineToExtended affine
@@ -107,11 +107,10 @@ toCryptoFailable (Left _) = CryptoFailed CryptoError_PointCoordinatesInvalid
 
 -- | Guarantee an element is in the Ed25519 subgroup.
 ensureInGroup :: ExtendedPoint 'Unknown -> Either Error (ExtendedPoint 'Member)
-ensureInGroup Zero = pure Zero
-ensureInGroup element@(NonZero ExtendedPoint'{x, y, z, t}) =
-  case safeScalarMultiply l element of
-    Zero -> pure (NonZero ExtendedPoint' { x = x, y = y, z = z, t = t})
-    _ -> throwError $ NotInGroup element
+ensureInGroup element@ExtendedPoint{x, y, z, t} =
+  if isExtendedZero (safeScalarMultiply l element)
+  then pure ExtendedPoint { x = x, y = y, z = z, t = t}
+  else  throwError $ NotInGroup element
 
 -- | Assert that an element is the Ed25519 subgroup.
 --
@@ -177,9 +176,9 @@ xRecover y =
 data GroupMembership = Unknown | Member
 
 -- | A point that might be a member of Ed25519.
--- TODO: Check if we can collapse this into 'ExtendedPoint'
-data ExtendedPoint' (groupMembership :: GroupMembership)
-  = ExtendedPoint'
+-- Note: [Extended coordinates]
+data ExtendedPoint (groupMembership :: GroupMembership)
+  = ExtendedPoint
   { x :: !Integer
   , y :: !Integer
   , z :: !Integer
@@ -188,24 +187,26 @@ data ExtendedPoint' (groupMembership :: GroupMembership)
 
 -- XXX: jml unsure about overriding equality like this.
 -- Note: [Extended coordinates]
-instance Eq (ExtendedPoint' a) where
+instance Eq (ExtendedPoint a) where
   point1 == point2 = extendedToAffine' point1 == extendedToAffine' point2
 
--- | A point that might be a member of Ed25519, with zero special-cased,
--- since many operations do not work with zero.
-data ExtendedPoint (groupMembership :: GroupMembership)
-  = Zero | NonZero (ExtendedPoint' groupMembership)
-  deriving (Eq, Show)
-
--- | Map all of the points that are equivalent to zero to Zero.
+-- | Zero in the extended coordinate space.
+--
+-- > affineZero = AffinePoint{x = 0, y = 1}
+-- > extendedZero == affineToExtended affineZero
+--
 -- Note: [Extended coordinates]
-normalizePoint :: ExtendedPoint' preserving -> ExtendedPoint preserving
-normalizePoint point
-  | isExtendedZero point = Zero
-  | otherwise = NonZero point
+extendedZero :: ExtendedPoint a
+extendedZero = ExtendedPoint {x = 0, y = 1, z = 1, t = 0}
 
-isExtendedZero :: ExtendedPoint' irrelevant -> Bool
-isExtendedZero ExtendedPoint'{x, y, z} = x == 0 && y' == z' && y' /= 0
+-- | Check if a point is equivalent to zero.
+--
+-- jml is unsure, but this probably exists because it might be faster than
+-- mapping to affine space and checking for equality.
+--
+-- Note: [Extended coordinates]
+isExtendedZero :: ExtendedPoint irrelevant -> Bool
+isExtendedZero ExtendedPoint{x, y, z} = x == 0 && y' == z' && y' /= 0
   where
     y' = y `mod` q
     z' = z `mod` q
@@ -217,11 +218,8 @@ isExtendedZero ExtendedPoint'{x, y, z} = x == 0 && y' == z' && y' /= 0
 --
 -- add-2008-hwcd-3
 addExtendedPoints :: ExtendedPoint a -> ExtendedPoint a -> ExtendedPoint a
-addExtendedPoints Zero Zero = Zero
-addExtendedPoints Zero point = point
-addExtendedPoints point Zero = point
-addExtendedPoints (NonZero ExtendedPoint'{x = x1, y = y1, z = z1, t = t1}) (NonZero ExtendedPoint'{x = x2, y = y2, z = z2, t = t2}) =
-  normalizePoint ExtendedPoint'{x = x3, y = y3, z = z3, t = t3}
+addExtendedPoints ExtendedPoint{x = x1, y = y1, z = z1, t = t1} ExtendedPoint{x = x2, y = y2, z = z2, t = t2} =
+  ExtendedPoint{x = x3, y = y3, z = z3, t = t3}
   where
     -- X3 = (E*F) % Q
     x3 = (e * f) `mod` q
@@ -254,9 +252,8 @@ addExtendedPoints (NonZero ExtendedPoint'{x = x1, y = y1, z = z1, t = t1}) (NonZ
 --
 -- dbl-2008-hwcd
 doubleExtendedPoint :: ExtendedPoint preserving -> ExtendedPoint preserving
-doubleExtendedPoint Zero = Zero
-doubleExtendedPoint (NonZero ExtendedPoint'{x = x1, y = y1, z = z1}) =
-  normalizePoint ExtendedPoint'{x= x3, y = y3, z = z3, t = t3}
+doubleExtendedPoint ExtendedPoint{x = x1, y = y1, z = z1} =
+  ExtendedPoint{x= x3, y = y3, z = z3, t = t3}
   where
     -- X3 = (E*F) % Q
     x3 = (e * f) `mod` q
@@ -293,8 +290,7 @@ safeScalarMultiply n = scalarMultiplyExtendedPoint addExtendedPoints n
 
 -- | Scalar multiplication parametrised by addition.
 scalarMultiplyExtendedPoint :: (ExtendedPoint a -> ExtendedPoint a -> ExtendedPoint a) -> Integer -> ExtendedPoint a -> ExtendedPoint a
-scalarMultiplyExtendedPoint _ 0 _    = Zero
-scalarMultiplyExtendedPoint _ _ Zero = Zero
+scalarMultiplyExtendedPoint _ 0 _    = extendedZero
 scalarMultiplyExtendedPoint add n x
   | n >= l    = scalarMultiplyExtendedPoint add (n `mod` l) x
   | even n    = doubleExtendedPoint (scalarMultiplyExtendedPoint add (n `div` 2) x)
@@ -308,9 +304,10 @@ makeGroupMember :: Integer -> Either Error (Element Ed25519)
 makeGroupMember y = do
   -- XXX: Similar to decodeElement. Can we share code?
   point <- affineToExtended <$> makeAffinePoint (xRecover y) y
-  case safeScalarMultiply 8 point of
-    Zero -> throwError $ LowOrderPoint point
-    point8 -> ensureInGroup point8
+  let point8 = safeScalarMultiply 8 point
+  if isExtendedZero point8
+    then throwError $ LowOrderPoint point
+    else ensureInGroup point8
 
 {-
 Note: [Arbitrary point generation]
@@ -358,7 +355,6 @@ makeAffinePoint x y
   | otherwise = throwError $ NotOnCurve x y
   where
     isOnCurve x' y' = ((-x') * x' + y' * y' - 1 - dConst * x' * x' * y' * y') `mod` q == 0
-
 
 -- | Encode an 'AffinePoint' into bytes.
 --
@@ -409,32 +405,26 @@ you can get a subgroup of the extended points group isomorphic to the affine poi
 by using "maps to the same affine point" as an equivalence relation.
 
 The Python version goes to some lengths to avoid doing calculations with zero.
-I have mirrored that behaviour here.
-However, I did so before I realised that extended points with the same affine point are equivalent.
-Thus, the Zero special-casing might be unnecessary.
+In an earlier revision, I preserved that behaviour,
+however, I have since removed it,
+as we have no performance data,
+and it adds extra complexity.
 
 This URL might help:
 http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
 -}
 
 affineToExtended :: AffinePoint -> ExtendedPoint 'Unknown
-affineToExtended = normalizePoint . affineToExtended'
-
-affineToExtended' :: AffinePoint -> ExtendedPoint' 'Unknown
-affineToExtended' AffinePoint{x, y} =
-  ExtendedPoint'
+affineToExtended AffinePoint{x, y} =
+  ExtendedPoint
   { x = x `mod` q
   , y = y `mod` q
   , z = 1
   , t = (x * y) `mod` q
   }
 
-extendedToAffine :: ExtendedPoint 'Member -> AffinePoint
-extendedToAffine Zero = AffinePoint{x = 0, y = 1}
-extendedToAffine (NonZero point) = extendedToAffine' point
-
-extendedToAffine' :: ExtendedPoint' a -> AffinePoint
-extendedToAffine' ExtendedPoint'{x, y, z} =
+extendedToAffine' :: ExtendedPoint a -> AffinePoint
+extendedToAffine' ExtendedPoint{x, y, z} =
   case makeAffinePoint x' y' of
     Left err -> panic $ "Could not make affine point: " <> show err
     Right r -> r
