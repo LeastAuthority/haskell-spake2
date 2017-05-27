@@ -7,7 +7,9 @@ Implementation of SPAKE2 key exchange protocol.
 Status
 ======
 
-Working implementation of I1024 that interoperates with python-spake2.
+Working implementation that interoperates with python-spake2
+using the default settings, i.e. with Ed25519.
+
 No other groups implemented.
 
 Goals
@@ -27,9 +29,10 @@ Right now:
 How to use it
 =============
 
-Right now, you don't—it only barely works.
+The `interoperability harness entry point <cmd/interop-entrypoint/Main.hs>`_
+is the best working example of how to use the code.
 
-If you want to know more, check out the `main module documentation <src/Crypto/Spake2.hs>`_.
+The `main module documentation <src/Crypto/Spake2.hs>`_ might also help.
 
 Testing for interoperability
 ----------------------------
@@ -57,19 +60,9 @@ you will need to invoke it like::
 
    stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.hs A abc -- /path/to/haskell-spake2-interop-entrypoint B abc
 
-Current results look like:
-
-.. code-block:: console
-
-   $ stack runhaskell TestInterop.hs -- ./python-spake2-interop-entrypoint.py A abc I1024 -- ~/.local/bin/haskell-spake2-interop-entrypoint B abc
-   ["./python-spake2-interop-entrypoint.py","A","abc","I1024"]
-   ["/Users/jml/.local/bin/haskell-spake2-interop-entrypoint","B","abc"]
-   A's key: 6fd01a051c7f9b883038523a3d70ec1f9a53e517292dd1d3080c9e040760d575
-   B's key: 6fd01a051c7f9b883038523a3d70ec1f9a53e517292dd1d3080c9e040760d575
-   Session keys match.
-
-Which demonstrates that the Haskell SPAKE2 implementation *does* work,
-as long as you are using the I1024 group (which is very much not the default).
+The above results are genuine,
+and demonstrate that the Haskell SPAKE2 implementation *does* work.
+Specifically, that it interoperates with python-spake2.
 
 Contributing
 ============
