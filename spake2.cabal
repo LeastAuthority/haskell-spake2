@@ -30,12 +30,32 @@ library
   build-depends:
       base >= 4.9 && < 5
     , protolude
+    , bytestring
     , cryptonite
     , memory
   exposed-modules:
       Crypto.Spake2
+      Crypto.Spake2.Group
       Crypto.Spake2.Groups
+      Crypto.Spake2.Groups.IntegerAddition
+      Crypto.Spake2.Groups.IntegerGroup
       Crypto.Spake2.Math
+      Crypto.Spake2.Util
+  default-language: Haskell2010
+
+executable haskell-spake2-interop-entrypoint
+  main-is: Main.hs
+  hs-source-dirs:
+      cmd/interop-entrypoint
+  default-extensions: NoImplicitPrelude OverloadedStrings
+  ghc-options: -Wall -Werror -threaded
+  build-depends:
+      base >= 4.9 && < 5
+    , protolude
+    , base16-bytestring
+    , cryptonite
+    , optparse-applicative
+    , spake2
   default-language: Haskell2010
 
 test-suite tasty
@@ -48,9 +68,12 @@ test-suite tasty
   build-depends:
       base >= 4.9 && < 5
     , protolude
+    , cryptonite
+    , QuickCheck
     , spake2
     , tasty
     , tasty-hspec
   other-modules:
+      Groups
       Spake2
   default-language: Haskell2010
