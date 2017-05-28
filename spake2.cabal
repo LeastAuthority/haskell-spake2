@@ -26,7 +26,7 @@ library
   hs-source-dirs:
       src
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror -Wno-type-defaults
+  ghc-options: -Wall -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
     , protolude
@@ -49,7 +49,7 @@ executable haskell-spake2-interop-entrypoint
   hs-source-dirs:
       cmd/interop-entrypoint
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror -Wno-type-defaults -threaded
+  ghc-options: -Wall -Wno-type-defaults -threaded
   build-depends:
       base >= 4.9 && < 5
     , protolude
@@ -65,7 +65,7 @@ test-suite tasty
   hs-source-dirs:
       tests
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -Werror -Wno-type-defaults
+  ghc-options: -Wall -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
     , protolude

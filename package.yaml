@@ -11,7 +11,7 @@ license: Apache
 github: jml/haskell-spake2
 category: Crypto
 
-ghc-options: -Wall -Werror -Wno-type-defaults
+ghc-options: -Wall -Wno-type-defaults
 default-extensions:
   - NoImplicitPrelude
   - OverloadedStrings
