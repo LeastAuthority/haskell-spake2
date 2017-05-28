@@ -6,7 +6,7 @@ Module: Crypto.Spake2.Groups.IntegerGroup
 Description: Multiplicative group of integers modulo \(n\)
 -}
 module Crypto.Spake2.Groups.IntegerGroup
-  ( IntegerGroup(order, subgroupOrder)
+  ( IntegerGroup(..)
   , makeIntegerGroup
   , i1024
   ) where

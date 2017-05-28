@@ -39,7 +39,7 @@ import Crypto.Spake2
   , formatError
   )
 import Crypto.Spake2.Group (Group(..))
-import Crypto.Spake2.Groups (IntegerGroup, i1024)
+import Crypto.Spake2.Groups (Ed25519(..))
 
 
 data Config = Config Side Password deriving (Eq, Ord)
@@ -103,7 +103,7 @@ runInteropTest protocol password inH outH = do
         _ -> Left ("Could not decode line: " <> show line)
 
 
-makeProtocolFromSide :: Side -> Protocol IntegerGroup SHA256
+makeProtocolFromSide :: Side -> Protocol Ed25519 SHA256
 makeProtocolFromSide side =
   case side of
     SideA -> makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideA
@@ -111,7 +111,7 @@ makeProtocolFromSide side =
     Symmetric -> makeSymmetricProtocol hashAlg group s idSymmetric
   where
     hashAlg = SHA256
-    group = i1024
+    group = Ed25519
     m = arbitraryElement group ("M" :: ByteString)
     n = arbitraryElement group ("N" :: ByteString)
     s = arbitraryElement group ("S" :: ByteString)
