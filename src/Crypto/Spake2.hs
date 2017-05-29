@@ -84,8 +84,7 @@ See 'Crypto.Spake2.Math' for details on the mathematics of the exchange.
 -}
 
 module Crypto.Spake2
-  ( something
-  , Password
+  ( Password
   , makePassword
   -- * The SPAKE2 protocol
   , Protocol
@@ -116,11 +115,6 @@ import Crypto.Spake2.Group (Group(..), decodeScalar, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
 import Crypto.Spake2.Util (expandData)
 
-
--- | Do-nothing function so that we have something to import in our tests.
--- TODO: Actually test something genuine and then remove this.
-something :: a -> a
-something x = x
 
 -- | Shared secret password used to negotiate the connection.
 --
