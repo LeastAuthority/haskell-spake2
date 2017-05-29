@@ -108,7 +108,7 @@ import Protolude hiding (group)
 import Crypto.Error (CryptoError, CryptoFailable(..))
 import Crypto.Hash (HashAlgorithm, hashWith)
 import Crypto.Random.Types (MonadRandom(..))
-import Data.ByteArray (ByteArrayAccess, ByteArray)
+import Data.ByteArray (ByteArrayAccess)
 import qualified Data.ByteArray as ByteArray
 import qualified Data.ByteString as ByteString
 
@@ -140,15 +140,10 @@ newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)
 -- | Convert a user-supplied password into a scalar on a group.
 passwordToScalar :: Group group => group -> Password -> Scalar group
 passwordToScalar group password =
-  let oversized = expandPassword password (scalarSizeBytes group + 16) :: ByteString
-  in decodeScalar group oversized
-
--- | Expand a password using HKDF so that it has a certain number of bytes.
---
--- TODO: jml cannot remember why you might want to call this.
-expandPassword :: ByteArray output => Password -> Int -> output
-expandPassword (Password bytes) numBytes = expandData info bytes numBytes
+  decodeScalar group oversized
   where
+    oversized = expandPassword password (scalarSizeBytes group + 16) :: ByteString
+    expandPassword (Password bytes) = expandData info bytes
     -- This needs to be exactly "SPAKE2 pw"
     -- See <https://github.com/bitwiseshiftleft/sjcl/pull/273/#issuecomment-185251593>
     info = "SPAKE2 pw"
