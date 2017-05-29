@@ -26,8 +26,8 @@ executables:
     ghc-options: -threaded
     source-dirs: cmd/interop-entrypoint
     dependencies:
-      - base16-bytestring
       - cryptonite
+      - memory
       - optparse-applicative
       - spake2
 
