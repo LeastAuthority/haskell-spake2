@@ -12,8 +12,7 @@ import Test.Tasty.Hspec (Spec, testSpec, describe, it, shouldBe)
 
 import Crypto.Spake2.Group (Group(..))
 import Crypto.Spake2.Groups
-  ( IntegerAddition(..)
-  , IntegerGroup(..)
+  ( IntegerGroup(..)
   , Ed25519(..)
   , i1024)
 import qualified Crypto.Spake2.Groups.Ed25519 as Ed25519
@@ -21,10 +20,8 @@ import qualified Crypto.Spake2.Groups.IntegerGroup as IntegerGroup
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do
-  groupProperties "integer addition modulo 7" (IntegerAddition 7) 1 (makeScalar 7)
   groupProperties "integer group" i1024 (IntegerGroup.generator i1024) (makeScalar (subgroupOrder i1024))
   groupProperties "Ed25519" Ed25519 Ed25519.generator (makeScalar Ed25519.l)
-
 
 makeScalar :: Integer -> Gen Integer
 makeScalar k = do

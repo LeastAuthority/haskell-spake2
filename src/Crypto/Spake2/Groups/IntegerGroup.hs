@@ -59,7 +59,7 @@ instance Group IntegerGroup where
   elementNegate group x = expSafe x (subgroupOrder group - 1) (order group)
   groupIdentity _ = 1
   scalarMultiply group n x = expSafe x (n `mod` subgroupOrder group) (order group)
-  integerToScalar group x = x `mod` subgroupOrder group  -- XXX: Should we instead fail?
+  integerToScalar group x = x `mod` subgroupOrder group
   scalarToInteger _ n = n
   encodeElement group = unsafeNumberToBytes (elementSizeBytes group)
   decodeElement group bytes =

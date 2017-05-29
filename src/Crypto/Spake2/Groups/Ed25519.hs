@@ -75,8 +75,7 @@ instance Group Ed25519 where
 
   encodeElement _ x = encodeAffinePoint (extendedToAffine' x)
   decodeElement _ bytes = toCryptoFailable $ do
-    affine <- decodeAffinePoint bytes
-    let extended = affineToExtended affine
+    extended <- affineToExtended <$> decodeAffinePoint bytes
     ensureInGroup extended
 
   generateElement group = do
@@ -302,7 +301,6 @@ scalarMultiplyExtendedPoint add n x
 -- | Attempt to create a member of Ed25519 from an affine @y@ coordinate.
 makeGroupMember :: Integer -> Either Error (Element Ed25519)
 makeGroupMember y = do
-  -- XXX: Similar to decodeElement. Can we share code?
   point <- affineToExtended <$> makeAffinePoint (xRecover y) y
   let point8 = safeScalarMultiply 8 point
   if isExtendedZero point8

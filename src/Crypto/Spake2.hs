@@ -215,16 +215,14 @@ data WhichSide = SideA | SideB deriving (Eq, Ord, Show, Bounded, Enum)
 
 -- | Relation between two sides in SPAKE2.
 -- Can be either symmetric (both sides are the same), or asymmetric.
---
--- XXX: Maybe too generic? Could reasonably replace 'a' with 'Side group'.
-data Relation a
+data Relation group
   = Asymmetric
-  { sideA :: a -- ^ Side A. Both sides need to agree who side A is.
-  , sideB :: a -- ^ Side B. Both sides need to agree who side B is.
+  { sideA :: Side group -- ^ Side A. Both sides need to agree who side A is.
+  , sideB :: Side group -- ^ Side B. Both sides need to agree who side B is.
   , us :: WhichSide -- ^ Which side we are
   }
   | Symmetric
-  { bothSides :: a -- ^ Description used by both sides.
+  { bothSides :: Side group -- ^ Description used by both sides.
   }
 
 theirPrefix :: Relation a -> Word8
@@ -245,7 +243,7 @@ data Protocol group hashAlgorithm
   = Protocol
   { group :: group -- ^ The group to use for encryption
   , hashAlgorithm :: hashAlgorithm -- ^ Hash algorithm used for generating the session key
-  , relation :: Relation (Side group)  -- ^ How the two sides relate to each other
+  , relation :: Relation group  -- ^ How the two sides relate to each other
   }
 
 -- | Construct an asymmetric SPAKE2 protocol.
