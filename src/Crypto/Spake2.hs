@@ -84,8 +84,7 @@ See 'Crypto.Spake2.Math' for details on the mathematics of the exchange.
 -}
 
 module Crypto.Spake2
-  ( something
-  , Password
+  ( Password
   , makePassword
   -- * The SPAKE2 protocol
   , Protocol
@@ -108,7 +107,7 @@ import Protolude hiding (group)
 import Crypto.Error (CryptoError, CryptoFailable(..))
 import Crypto.Hash (HashAlgorithm, hashWith)
 import Crypto.Random.Types (MonadRandom(..))
-import Data.ByteArray (ByteArrayAccess, ByteArray)
+import Data.ByteArray (ByteArrayAccess)
 import qualified Data.ByteArray as ByteArray
 import qualified Data.ByteString as ByteString
 
@@ -116,11 +115,6 @@ import Crypto.Spake2.Group (Group(..), decodeScalar, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
 import Crypto.Spake2.Util (expandData)
 
-
--- | Do-nothing function so that we have something to import in our tests.
--- TODO: Actually test something genuine and then remove this.
-something :: a -> a
-something x = x
 
 -- | Shared secret password used to negotiate the connection.
 --
@@ -140,15 +134,10 @@ newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)
 -- | Convert a user-supplied password into a scalar on a group.
 passwordToScalar :: Group group => group -> Password -> Scalar group
 passwordToScalar group password =
-  let oversized = expandPassword password (scalarSizeBytes group + 16) :: ByteString
-  in decodeScalar group oversized
-
--- | Expand a password using HKDF so that it has a certain number of bytes.
---
--- TODO: jml cannot remember why you might want to call this.
-expandPassword :: ByteArray output => Password -> Int -> output
-expandPassword (Password bytes) numBytes = expandData info bytes numBytes
+  decodeScalar group oversized
   where
+    oversized = expandPassword password (scalarSizeBytes group + 16) :: ByteString
+    expandPassword (Password bytes) = expandData info bytes
     -- This needs to be exactly "SPAKE2 pw"
     -- See <https://github.com/bitwiseshiftleft/sjcl/pull/273/#issuecomment-185251593>
     info = "SPAKE2 pw"
@@ -215,16 +204,14 @@ data WhichSide = SideA | SideB deriving (Eq, Ord, Show, Bounded, Enum)
 
 -- | Relation between two sides in SPAKE2.
 -- Can be either symmetric (both sides are the same), or asymmetric.
---
--- XXX: Maybe too generic? Could reasonably replace 'a' with 'Side group'.
-data Relation a
+data Relation group
   = Asymmetric
-  { sideA :: a -- ^ Side A. Both sides need to agree who side A is.
-  , sideB :: a -- ^ Side B. Both sides need to agree who side B is.
+  { sideA :: Side group -- ^ Side A. Both sides need to agree who side A is.
+  , sideB :: Side group -- ^ Side B. Both sides need to agree who side B is.
   , us :: WhichSide -- ^ Which side we are
   }
   | Symmetric
-  { bothSides :: a -- ^ Description used by both sides.
+  { bothSides :: Side group -- ^ Description used by both sides.
   }
 
 theirPrefix :: Relation a -> Word8
@@ -245,7 +232,7 @@ data Protocol group hashAlgorithm
   = Protocol
   { group :: group -- ^ The group to use for encryption
   , hashAlgorithm :: hashAlgorithm -- ^ Hash algorithm used for generating the session key
-  , relation :: Relation (Side group)  -- ^ How the two sides relate to each other
+  , relation :: Relation group  -- ^ How the two sides relate to each other
   }
 
 -- | Construct an asymmetric SPAKE2 protocol.

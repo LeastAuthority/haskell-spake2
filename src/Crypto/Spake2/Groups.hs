@@ -9,10 +9,7 @@ module Crypto.Spake2.Groups
   , IntegerGroup.IntegerGroup(..)
   , IntegerGroup.makeIntegerGroup
   , IntegerGroup.i1024
-  -- * For testing only
-  , IntegerAddition.IntegerAddition(..)
   ) where
 
 import qualified Crypto.Spake2.Groups.Ed25519 as Ed25519
-import qualified Crypto.Spake2.Groups.IntegerAddition as IntegerAddition
 import qualified Crypto.Spake2.Groups.IntegerGroup as IntegerGroup

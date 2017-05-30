@@ -91,8 +91,8 @@ See 'createSessionKey' for more information.
 -}
 
 module Crypto.Spake2.Math
-  ( Spake2(..)  -- XXX: Not sure want to export innards but it disables "unused" warning
-  , Params(..)  -- XXX: ditto
+  ( Spake2(..)
+  , Params(..)
   , startSpake2
   , Spake2Exchange
   , computeOutboundMessage

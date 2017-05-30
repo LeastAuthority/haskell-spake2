@@ -17,10 +17,6 @@ import Crypto.Number.Serialize (os2ip, i2ospOf, i2ospOf_)
 import qualified Crypto.KDF.HKDF as HKDF
 import Data.ByteArray (ByteArray, ByteArrayAccess(..))
 
--- TODO: memory package (a dependency of cryptonite) has
--- Data.ByteArray.Encoding, which does base16 encoding. Perhaps we should use
--- that rather than third-party base16-bytestring library.
-
 -- | Take an arbitrary sequence of bytes and expand it to be the given number
 -- of bytes. Do this by extracting a pseudo-random key and expanding it using
 -- HKDF.

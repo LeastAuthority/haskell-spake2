@@ -142,15 +142,19 @@ Reasons for:
 
  * cryptonite does it with 'EllipticCurve'
  * warner does it with spake2.groups
+ * you just need to send different stuff over the wire for elliptic curve groups
+   than integer modulo groups
 
 Reasons against:
 
  * mathematical structure of groups has no connection to serialization
  * might want multiple encodings for same mathematical group
+   (this seems unlikely)
 
-Including for now on the assumption that I'm ignorant.
+We're keeping encode/decode in for now.
+Later, we might want to split it out into a different typeclass,
+perhaps one that inherits from the base 'Group' class.
 
-TODO: Revisit decision to put byte encoding in Group after we've done a couple of implementations
 -}
 
 {-

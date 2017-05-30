@@ -18,7 +18,7 @@ module Main (main) where
 import Protolude hiding (group)
 
 import Crypto.Hash (SHA256(..))
-import qualified Data.ByteString.Base16 as Base16
+import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
 import Options.Applicative
 import System.IO (hFlush, hGetLine, hPutStrLn)
 
@@ -80,9 +80,9 @@ runInteropTest protocol password inH outH = do
   let outElement = computeOutboundMessage spake2
   output (elementToMessage protocol outElement)
   line <- hGetLine inH
-  let inMsg = parseHex (toS line)
+  let inMsg = parseHex (toS line :: ByteString)
   case inMsg of
-    Left err -> abort err
+    Left err -> abort (toS err)
     Right inMsgBytes ->
       case extractElement protocol inMsgBytes of
         Left err -> abort $ "Could not handle incoming message (line = " <> show line <> ", msgBytes = " <>  show inMsgBytes <> "): " <> formatError err
@@ -94,13 +94,13 @@ runInteropTest protocol password inH outH = do
 
   where
     output message = do
-      hPutStrLn outH (toS (Base16.encode message))
+      hPutStrLn outH (toS (convertToBase Base16 message :: ByteString))
       hFlush outH
 
     parseHex line =
-      case Base16.decode line of
-        (bytes, "") -> Right bytes
-        _ -> Left ("Could not decode line: " <> show line)
+      case convertFromBase Base16 line of
+        Left err -> Left ("Could not decode line (reason: " <> err <> "): " <> show line)
+        Right bytes -> Right bytes
 
 
 makeProtocolFromSide :: Side -> Protocol Ed25519 SHA256
