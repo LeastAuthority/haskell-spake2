@@ -340,7 +340,11 @@ That final check is a Python assertion,
 which would crash the program if incorrect.
 For programming convenience, I just skip these values.
 
-jml doesn't know what is meant by the 'order' of a point.
+The 'order' of a point \(x\( is the number \(n\) such that:
+'scalarMultiply group (integerToScalar group n) x == groupIdentity group'
+
+Note this is different from the order of a /group/,
+which for finite groups is the number of elements in the group.
 
 -}
 
