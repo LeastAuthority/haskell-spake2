@@ -19,12 +19,20 @@ import qualified Crypto.Spake2.Groups.IntegerGroup as IntegerGroup
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do
-  describe "integer group" $ do
-    describe "is a group" $ groupProperties i1024 (makeElement i1024 (makeScalar (subgroupOrder i1024)) (IntegerGroup.generator i1024))
-    describe "is an abelian group" $ abelianGroupProperties i1024 (IntegerGroup.generator i1024) (makeScalar (subgroupOrder i1024))
-  describe "Ed25519" $ do
-    describe "is a group" $ groupProperties Ed25519 (makeElement Ed25519 (makeScalar Ed25519.l) Ed25519.generator)
-    describe "is an abelian group" $ abelianGroupProperties Ed25519 Ed25519.generator (makeScalar Ed25519.l)
+  describe "integer group" $
+    allGroupProperties i1024 (makeScalar (subgroupOrder i1024)) (IntegerGroup.generator i1024)
+  describe "Ed25519" $
+    allGroupProperties Ed25519 (makeScalar Ed25519.l) Ed25519.generator
+
+allGroupProperties
+  :: (Show (Scalar group), Show (Element group), Eq (Scalar group), Eq (Element group), AbelianGroup group)
+  => group
+  -> Gen (Scalar group)
+  -> Element group
+  -> Spec
+allGroupProperties group scalars base = do
+  describe "is a group" $ groupProperties group (makeElement group scalars base)
+  describe "is an abelian group" $ abelianGroupProperties group base scalars
 
 groupProperties
   :: (Group group, Eq (Element group), Show (Element group))
