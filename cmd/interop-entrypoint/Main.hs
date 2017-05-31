@@ -38,7 +38,7 @@ import Crypto.Spake2
   , elementToMessage
   , formatError
   )
-import Crypto.Spake2.Group (Group(..))
+import Crypto.Spake2.Group (AbelianGroup, Group(..))
 import Crypto.Spake2.Groups (Ed25519(..))
 
 
@@ -69,7 +69,7 @@ abort message = do
 
 
 runInteropTest
-  :: (HasCallStack, Group group)
+  :: (HasCallStack, AbelianGroup group)
   => Protocol group SHA256
   -> Password
   -> Handle

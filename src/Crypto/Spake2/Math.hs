@@ -103,7 +103,7 @@ import Protolude hiding (group)
 
 import Crypto.Random.Types (MonadRandom(..))
 
-import Crypto.Spake2.Group (Group(..), KeyPair(..))
+import Crypto.Spake2.Group (AbelianGroup(..), Group(..), KeyPair(..))
 
 -- | The parameters of the SPAKE2 protocol. The other side needs to be using
 -- the same values, but with swapped values for 'ourBlind' and 'theirBlind'.
@@ -135,11 +135,11 @@ data Spake2Exchange group
 
 -- | Initiate the SPAKE2 exchange. Generates a secret (@xy@) that will be held
 -- by this side, and transmitted to the other side in "blinded" form.
-startSpake2 :: (Group group, MonadRandom randomly) => Spake2 group -> randomly (Spake2Exchange group)
+startSpake2 :: (AbelianGroup group, MonadRandom randomly) => Spake2 group -> randomly (Spake2Exchange group)
 startSpake2 spake2' = Started spake2' <$> generateElement (group . params $ spake2')
 
 -- | Determine the element (either \(X^{\star}\) or \(Y^{\star}\)) to send to the other side.
-computeOutboundMessage :: Group group => Spake2Exchange group -> Element group
+computeOutboundMessage :: AbelianGroup group => Spake2Exchange group -> Element group
 computeOutboundMessage Started{spake2 = Spake2{params = Params{group, ourBlind}, password}, xy} =
   elementAdd group (keyPairPublic xy) (scalarMultiply group password ourBlind)
 
@@ -161,7 +161,7 @@ computeOutboundMessage Started{spake2 = Spake2{params = Params{group, ourBlind},
 -- * \(K\) is the result of this function
 -- * \(pw\) is the password (this is what makes it SPAKE2, not SPAKE1)
 generateKeyMaterial
-  :: Group group
+  :: AbelianGroup group
   => Spake2Exchange group  -- ^ An initiated SPAKE2 exchange
   -> Element group  -- ^ The outbound message from the other side (i.e. inbound to us)
   -> Element group -- ^ The final piece of key material to generate the session key.

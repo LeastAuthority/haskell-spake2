@@ -5,12 +5,11 @@ module Groups (tests) where
 import Protolude hiding (group)
 
 import Crypto.Error (CryptoFailable(..))
-import GHC.Base (String)
 import Test.QuickCheck (Gen, (===), arbitrary, forAll, property)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (Spec, testSpec, describe, it, shouldBe)
 
-import Crypto.Spake2.Group (Group(..))
+import Crypto.Spake2.Group (AbelianGroup(..), Group(..))
 import Crypto.Spake2.Groups
   ( IntegerGroup(..)
   , Ed25519(..)
@@ -20,27 +19,30 @@ import qualified Crypto.Spake2.Groups.IntegerGroup as IntegerGroup
 
 tests :: IO TestTree
 tests = testSpec "Groups" $ do
-  groupProperties "integer group" i1024 (IntegerGroup.generator i1024) (makeScalar (subgroupOrder i1024))
-  groupProperties "Ed25519" Ed25519 Ed25519.generator (makeScalar Ed25519.l)
+  describe "integer group" $ do
+    describe "is a group" $ groupProperties i1024 (makeElement i1024 (makeScalar (subgroupOrder i1024)) (IntegerGroup.generator i1024))
+    describe "is an abelian group" $ abelianGroupProperties i1024 (IntegerGroup.generator i1024) (makeScalar (subgroupOrder i1024))
+  describe "Ed25519" $ do
+    describe "is a group" $ groupProperties Ed25519 (makeElement Ed25519 (makeScalar Ed25519.l) Ed25519.generator)
+    describe "is an abelian group" $ abelianGroupProperties Ed25519 Ed25519.generator (makeScalar Ed25519.l)
+
 
 makeScalar :: Integer -> Gen Integer
 makeScalar k = do
   i <- arbitrary
   pure $ i `mod` k
 
-makeElement :: Group group => group -> Gen (Scalar group) -> Element group -> Gen (Element group)
+makeElement :: AbelianGroup group => group -> Gen (Scalar group) -> Element group -> Gen (Element group)
 makeElement group scalars base = do
   scalar <- scalars
   pure (scalarMultiply group scalar base)
 
 groupProperties
-  :: (Group group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
-  => String
-  -> group
-  -> Element group
-  -> Gen (Scalar group)
+  :: (Group group, Eq (Element group), Show (Element group))
+  => group
+  -> Gen (Element group)
   -> Spec
-groupProperties name group base scalars = describe name $ do
+groupProperties group elements = do
   it "addition is associative" $ property $
     forAll triples $ \(x, y, z) -> elementAdd group (elementAdd group x y) z === elementAdd group x (elementAdd group y z)
 
@@ -65,6 +67,29 @@ groupProperties name group base scalars = describe name $ do
   it "element codec roundtrips" $ property $
     forAll elements $ \x -> let bytes = encodeElement group x :: ByteString
                             in decodeElement group bytes == CryptoPassed x
+
+  where
+    pairs = do
+      x <- elements
+      y <- elements
+      pure (x, y)
+
+    triples = do
+      x <- elements
+      y <- elements
+      z <- elements
+      pure (x, y, z)
+
+
+abelianGroupProperties
+  :: (AbelianGroup group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
+  => group
+  -> Element group
+  -> Gen (Scalar group)
+  -> Spec
+abelianGroupProperties group base scalars = do
+  it "addition is commutative" $ property $
+    forAll pairs $ \(x, y) -> elementAdd group x y === elementAdd group y x
 
   it "scalar to integer roundtrips" $ property $
     forAll scalars $ \n -> integerToScalar group (scalarToInteger group n) === n
@@ -91,9 +116,3 @@ groupProperties name group base scalars = describe name $ do
       x <- elements
       y <- elements
       pure (x, y)
-
-    triples = do
-      x <- elements
-      y <- elements
-      z <- elements
-      pure (x, y, z)

@@ -19,7 +19,8 @@ import Crypto.Number.Generate (generateMax)
 import Crypto.Number.ModArithmetic (expSafe)
 
 import Crypto.Spake2.Group
-  ( Group(..)
+  ( AbelianGroup(..)
+  , Group(..)
   , KeyPair(..)
   , elementSizeBytes
   )
@@ -52,15 +53,11 @@ makeIntegerGroup order subgroupOrder generator = Just (IntegerGroup order subgro
 
 instance Group IntegerGroup where
   type Element IntegerGroup = Integer
-  type Scalar IntegerGroup = Integer
 
   elementAdd group x y = (x * y) `mod` order group
   -- At a guess, negation is scalar multiplication where the scalar is -1
   elementNegate group x = expSafe x (subgroupOrder group - 1) (order group)
   groupIdentity _ = 1
-  scalarMultiply group n x = expSafe x (n `mod` subgroupOrder group) (order group)
-  integerToScalar group x = x `mod` subgroupOrder group
-  scalarToInteger _ n = n
   encodeElement group = unsafeNumberToBytes (elementSizeBytes group)
   decodeElement group bytes =
     case bytesToNumber bytes of
@@ -68,11 +65,6 @@ instance Group IntegerGroup where
         | x <= 0 || x >= order group -> CryptoFailed CryptoError_PointSizeInvalid
         | expSafe x (subgroupOrder group) (order group) /= groupIdentity group -> CryptoFailed CryptoError_PointCoordinatesInvalid
         | otherwise -> CryptoPassed x
-  generateElement group = do
-    scalar <- generateMax (subgroupOrder group)
-    let element = scalarMultiply group scalar (generator group)
-    pure (KeyPair element scalar)
-  scalarSizeBits group = numBits (subgroupOrder group)
   elementSizeBits group = numBits (order group)
   arbitraryElement group seed =
     let processedSeed = expandArbitraryElementSeed seed (elementSizeBytes group) :: ByteString
@@ -81,6 +73,21 @@ instance Group IntegerGroup where
         r = (p - 1) `div` q
         h = bytesToNumber processedSeed `mod` p
     in expSafe h r p
+
+
+instance AbelianGroup IntegerGroup where
+  type Scalar IntegerGroup = Integer
+
+  scalarMultiply group n x = expSafe x (n `mod` subgroupOrder group) (order group)
+  integerToScalar group x = x `mod` subgroupOrder group
+  scalarToInteger _ n = n
+
+  generateElement group = do
+    scalar <- generateMax (subgroupOrder group)
+    let element = scalarMultiply group scalar (generator group)
+    pure (KeyPair element scalar)
+  scalarSizeBits group = numBits (subgroupOrder group)
+
 
 -- | 1024 bit integer group.
 --

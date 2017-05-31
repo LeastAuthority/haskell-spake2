@@ -1,10 +1,11 @@
 {-# LANGUAGE TypeFamilies #-}
 {-|
 Module: Crypto.Spake2.Group
-Description: Interface for mathematical groups
+Description: Interfaces for mathematical groups
 -}
 module Crypto.Spake2.Group
-  ( Group(..)
+  ( AbelianGroup(..)
+  , Group(..)
   , decodeScalar
   , elementSizeBytes
   , scalarSizeBytes
@@ -19,23 +20,11 @@ import Data.ByteArray (ByteArray, ByteArrayAccess(..))
 
 import Crypto.Spake2.Util (bytesToNumber)
 
+
 -- | A mathematical group intended to be used with SPAKE2.
---
--- Notes:
---
---  * This is a much richer interface than one would expect from a group purely derived from abstract algebra
---  * jml thinks this is relevant to all Diffie-Hellman cryptography,
---    but too ignorant to say for sure
---  * Is this group automatically abelian? cyclic?
---    Must it have these properties?
 class Group group where
   -- | An element of the group.
   type Element group :: *
-
-  -- | A scalar for this group.
-  -- Mathematically equivalent to an integer,
-  -- but possibly stored differently for computational reasons.
-  type Scalar group :: *
 
   -- | Group addition.
   --
@@ -62,10 +51,86 @@ class Group group where
   -- prop> \x -> (elementAdd group groupIdentity x) == x
   groupIdentity :: group -> Element group
 
+  -- | Encode an element of the group into bytes.
+  --
+  -- Note [Byte encoding in Group]
+  --
+  -- prop> \x -> decodeElement group (encodeElement group x) == CryptoPassed x
+  encodeElement :: ByteArray bytes => group -> Element group -> bytes
+
+  -- | Decode an element into the group from some bytes.
+  --
+  -- Note [Byte encoding in Group]
+  decodeElement :: ByteArray bytes => group -> bytes -> CryptoFailable (Element group)
+
+  -- | Size of elements, in bits
+  elementSizeBits :: group -> Int
+
+  -- | Deterministically create an arbitrary element from a seed bytestring.
+  --
+  -- __XXX__: jml would much rather this take a scalar, an element, or even an integer, rather than bytes
+  -- because bytes mean that the group instances have to know about hash algorithms and HKDF.
+  -- If the IntegerGroup class in SPAKE2 also oversized its input,
+  -- then it and the ed25519 implementation would have identical decoding.
+  arbitraryElement :: ByteArrayAccess bytes => group -> bytes -> Element group
+
+
+-- | A group where 'elementAdd' is commutative.
+--
+-- That is, where
+--
+-- prop> \x y -> elementAdd group x y == elementAdd group y x
+--
+-- This property leads to a natural \(\mathbb{Z}\)-module,
+-- where scalar multiplication is defined as repeatedly calling `elementAdd`.
+--
+-- === Definitions
+--
+-- Warning: this gets algebraic.
+--
+-- A /module/ is a ring \(R\) together with an abelian group \((G, +)\),
+-- and a new operator \(\cdot\) (i.e. scalar multiplication)
+-- such that:
+--
+-- 1. \(r \cdot (x + y) = r \cdot x + r \cdot y\)
+-- 2. \((r + s) \cdot x = r \cdot x + s \cdot x\)
+-- 3. \((rs) \cdot x = r \cdot (s \cdot x)\)
+-- 4. \(1_R \cdot x = x\)
+--
+-- for all \(x, y\) in \(G\), and \(r, s\) in \(R\),
+-- where \(1_R\) is the identity of the ring.
+--
+-- A /ring/ \(R, +, \cdot\) a set \(R\) with two operators such that:
+--
+-- 1. \(R\) is an abelian group under \(+\)
+-- 2. \(R\) is a monoid under \(\cdot\)
+-- 3. \(cdot\) is _distributive_ with respect to \(+\). That is,
+--    1. \(a \cdot (b + c) = (a \cdot b) + (a \cdot c) (left distributivity)
+--    2. \((b + c) \cdot a) = (b \cdot a) + (c \cdot a) (right distributivity)
+--
+-- Note we have to define left & right distributivity,
+-- because \(\cdot\) might not be commutative.
+--
+-- A /monoid/ is a group without the notion of inverse. See Haskell's 'Monoid' typeclass.
+--
+-- A \(\mathbb{Z}\)-module is a module where the ring \(R\)
+-- is the integers with normal addition and multiplication.
+class Group group => AbelianGroup group where
+  -- | A scalar for this group.
+  -- Mathematically equivalent to an integer,
+  -- but possibly stored differently for computational reasons.
+  type Scalar group :: *
+
   -- | Multiply an element of the group with respect to a scalar.
   --
   -- This is equivalent to adding the element to itself N times, where N is a scalar.
+  -- The default implementation does exactly that.
   scalarMultiply :: group -> Scalar group -> Element group -> Element group
+  scalarMultiply group scalar element =
+    scalarMultiply' (scalarToInteger group scalar) element
+    where
+      scalarMultiply' 0 _ = groupIdentity group
+      scalarMultiply' n x = elementAdd group x (scalarMultiply' (n - 1) x)
 
   -- | Get the scalar that corresponds to an integer.
   --
@@ -81,39 +146,16 @@ class Group group where
   -- prop> \x -> integerToScalar group (scalarToInteger group x) == x
   scalarToInteger :: group -> Scalar group -> Integer
 
-  -- | Encode an element of the group into bytes.
-  --
-  -- Note [Byte encoding in Group]
-  --
-  -- prop> \x -> decodeElement group (encodeElement group x) == CryptoPassed x
-  encodeElement :: ByteArray bytes => group -> Element group -> bytes
-
-  -- | Decode an element into the group from some bytes.
-  --
-  -- Note [Byte encoding in Group]
-  decodeElement :: ByteArray bytes => group -> bytes -> CryptoFailable (Element group)
+  -- | Size of scalars, in bits
+  scalarSizeBits :: group -> Int
 
   -- | Encode a scalar into bytes.
   -- | Generate a new random element of the group, with corresponding scalar.
   generateElement :: MonadRandom randomly => group -> randomly (KeyPair group)
 
-  -- | Size of elements, in bits
-  elementSizeBits :: group -> Int
-
-  -- | Size of scalars, in bits
-  scalarSizeBits :: group -> Int
-
-  -- | Deterministically create an arbitrary element from a seed bytestring.
-  --
-  -- __XXX__: jml would much rather this take a scalar, an element, or even an integer, rather than bytes
-  -- because bytes mean that the group instances have to know about hash algorithms and HKDF.
-  -- If the IntegerGroup class in SPAKE2 also oversized its input,
-  -- then it and the ed25519 implementation would have identical decoding.
-  arbitraryElement :: ByteArrayAccess bytes => group -> bytes -> Element group
-
 
 -- | Map some arbitrary bytes into a scalar in a group.
-decodeScalar :: (ByteArrayAccess bytes, Group group) => group -> bytes -> Scalar group
+decodeScalar :: (ByteArrayAccess bytes, AbelianGroup group) => group -> bytes -> Scalar group
 decodeScalar group bytes = integerToScalar group (bytesToNumber bytes)
 
 -- | Size of elements in a group, in bits.
@@ -121,7 +163,7 @@ elementSizeBytes :: Group group => group -> Int
 elementSizeBytes group = (elementSizeBits group + 7) `div` 8
 
 -- | Size of scalars in a group, in bytes.
-scalarSizeBytes :: Group group => group -> Int
+scalarSizeBytes :: AbelianGroup group => group -> Int
 scalarSizeBytes group = (scalarSizeBits group + 7) `div` 8
 
 -- | A group key pair composed of the private part (a scalar)
@@ -131,6 +173,19 @@ data KeyPair group
   { keyPairPublic :: !(Element group)
   , keyPairPrivate :: !(Scalar group)
   }
+
+{-
+Note [Algebra]
+~~~~~~~~~~~~~~
+
+* Perhaps we should call 'AbelianGroup' 'ZModule' or similar?
+* A "proper" implementation would no doubt have a Ring typeclass
+  and then a new Module typeclass that somehow composed a Ring and an AbelianGroup.
+  This seems unnecessary for our implementation needs,
+  and is perhaps best left to those who know something about designing algebraic libraries.
+* Cyclic groups are necessarily abelian.
+
+-}
 
 {-
 Note [Byte encoding in Group]

@@ -111,7 +111,7 @@ import Data.ByteArray (ByteArrayAccess)
 import qualified Data.ByteArray as ByteArray
 import qualified Data.ByteString as ByteString
 
-import Crypto.Spake2.Group (Group(..), decodeScalar, scalarSizeBytes)
+import Crypto.Spake2.Group (AbelianGroup(..), Group(..), decodeScalar, scalarSizeBytes)
 import qualified Crypto.Spake2.Math as Math
 import Crypto.Spake2.Util (expandData)
 
@@ -132,7 +132,7 @@ makePassword = Password
 newtype SideID = SideID { unSideID :: ByteString } deriving (Eq, Ord, Show)
 
 -- | Convert a user-supplied password into a scalar on a group.
-passwordToScalar :: Group group => group -> Password -> Scalar group
+passwordToScalar :: AbelianGroup group => group -> Password -> Scalar group
 passwordToScalar group password =
   decodeScalar group oversized
   where
@@ -277,7 +277,7 @@ getParams Protocol{group, relation} =
 
 -- | Commence a SPAKE2 exchange.
 startSpake2
-  :: (MonadRandom randomly, Group group)
+  :: (MonadRandom randomly, AbelianGroup group)
   => Protocol group hashAlgorithm
   -> Password
   -> randomly (Math.Spake2Exchange group)
