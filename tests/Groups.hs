@@ -33,7 +33,7 @@ groupProperties
   -> Spec
 groupProperties group elements = do
   it "addition is associative" $ property $
-    forAll triples $ \(x, y, z) -> elementAdd group (elementAdd group x y) z === elementAdd group x (elementAdd group y z)
+    forAll (triples elements) $ \(x, y, z) -> elementAdd group (elementAdd group x y) z === elementAdd group x (elementAdd group y z)
 
   it "addition with inverse yields identity" $ property $
     forAll elements $ \x -> elementAdd group x (elementNegate group x) === groupIdentity group
@@ -45,7 +45,7 @@ groupProperties group elements = do
     elementNegate group (groupIdentity group) `shouldBe` groupIdentity group
 
   it "subtraction is negated addition" $ property $
-    forAll pairs $ \(x, y) -> elementSubtract group x y === elementAdd group x (elementNegate group y)
+    forAll (pairs elements) $ \(x, y) -> elementSubtract group x y === elementAdd group x (elementNegate group y)
 
   it "right-hand addition with identity yields original" $ property $
     forAll elements $ \x -> elementAdd group x (groupIdentity group) === x
@@ -57,18 +57,6 @@ groupProperties group elements = do
     forAll elements $ \x -> let bytes = encodeElement group x :: ByteString
                             in decodeElement group bytes == CryptoPassed x
 
-  where
-    pairs = do
-      x <- elements
-      y <- elements
-      pure (x, y)
-
-    triples = do
-      x <- elements
-      y <- elements
-      z <- elements
-      pure (x, y, z)
-
 
 abelianGroupProperties
   :: (AbelianGroup group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
@@ -78,7 +66,7 @@ abelianGroupProperties
   -> Spec
 abelianGroupProperties group base scalars = do
   it "addition is commutative" $ property $
-    forAll pairs $ \(x, y) -> elementAdd group x y === elementAdd group y x
+    forAll (pairs elements) $ \(x, y) -> elementAdd group x y === elementAdd group y x
 
   it "scalar to integer roundtrips" $ property $
     forAll scalars $ \n -> integerToScalar group (scalarToInteger group n) === n
@@ -101,11 +89,20 @@ abelianGroupProperties group base scalars = do
   where
     elements = makeElement group scalars base
 
-    pairs = do
-      x <- elements
-      y <- elements
-      pure (x, y)
+-- | Generate pairs of a thing.
+pairs :: Gen a -> Gen (a, a)
+pairs gen = do
+  x <- gen
+  y <- gen
+  pure (x, y)
 
+-- | Generate triples of a thing.
+triples :: Gen a -> Gen (a, a, a)
+triples gen = do
+  x <- gen
+  y <- gen
+  z <- gen
+  pure (x, y, z)
 
 makeScalar :: Integer -> Gen Integer
 makeScalar k = do
