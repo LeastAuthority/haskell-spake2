@@ -32,7 +32,7 @@ allGroupProperties
   -> Spec
 allGroupProperties group scalars base = do
   describe "is a group" $ groupProperties group (makeElement group scalars base)
-  describe "is an abelian group" $ abelianGroupProperties group base scalars
+  describe "is an abelian group" $ abelianGroupProperties group scalars base
 
 groupProperties
   :: (Group group, Eq (Element group), Show (Element group))
@@ -69,10 +69,10 @@ groupProperties group elements = do
 abelianGroupProperties
   :: (AbelianGroup group, Eq (Element group), Eq (Scalar group), Show (Element group), Show (Scalar group))
   => group
-  -> Element group
   -> Gen (Scalar group)
+  -> Element group
   -> Spec
-abelianGroupProperties group base scalars = do
+abelianGroupProperties group scalars base = do
   it "addition is commutative" $ property $
     forAll (pairs elements) $ \(x, y) -> elementAdd group x y === elementAdd group y x
 
