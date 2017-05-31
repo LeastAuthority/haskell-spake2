@@ -26,17 +26,6 @@ tests = testSpec "Groups" $ do
     describe "is a group" $ groupProperties Ed25519 (makeElement Ed25519 (makeScalar Ed25519.l) Ed25519.generator)
     describe "is an abelian group" $ abelianGroupProperties Ed25519 Ed25519.generator (makeScalar Ed25519.l)
 
-
-makeScalar :: Integer -> Gen Integer
-makeScalar k = do
-  i <- arbitrary
-  pure $ i `mod` k
-
-makeElement :: AbelianGroup group => group -> Gen (Scalar group) -> Element group -> Gen (Element group)
-makeElement group scalars base = do
-  scalar <- scalars
-  pure (scalarMultiply group scalar base)
-
 groupProperties
   :: (Group group, Eq (Element group), Show (Element group))
   => group
@@ -116,3 +105,14 @@ abelianGroupProperties group base scalars = do
       x <- elements
       y <- elements
       pure (x, y)
+
+
+makeScalar :: Integer -> Gen Integer
+makeScalar k = do
+  i <- arbitrary
+  pure $ i `mod` k
+
+makeElement :: AbelianGroup group => group -> Gen (Scalar group) -> Element group -> Gen (Element group)
+makeElement group scalars base = do
+  scalar <- scalars
+  pure (scalarMultiply group scalar base)
