@@ -28,7 +28,7 @@ import Data.ByteArray (ByteArray, ByteArrayAccess)
 import qualified Data.ByteArray as ByteArray
 import qualified Data.List as List
 
-import Crypto.Spake2.Group (Group(..), KeyPair(..), scalarSizeBytes)
+import Crypto.Spake2.Group (AbelianGroup(..), Group(..), KeyPair(..), scalarSizeBytes)
 import Crypto.Spake2.Util (bytesToNumber, expandArbitraryElementSeed)
 
 {-
@@ -62,35 +62,40 @@ ideally demonstrating its equivalence with some automated tests.
 data Ed25519 = Ed25519 deriving (Eq, Show)
 
 instance Group Ed25519 where
-  type Scalar Ed25519 = Integer
   type Element Ed25519 = ExtendedPoint 'Member
 
   elementAdd _ x y = addExtendedPoints x y
   elementNegate group = scalarMultiply group (l - 1)
   groupIdentity _ = assertInGroup extendedZero
-  scalarMultiply _ n x = safeScalarMultiply n x
-
-  integerToScalar _ x = x
-  scalarToInteger _ x = x
 
   encodeElement _ x = encodeAffinePoint (extendedToAffine' x)
   decodeElement _ bytes = toCryptoFailable $ do
     extended <- affineToExtended <$> decodeAffinePoint bytes
     ensureInGroup extended
 
-  generateElement group = do
-    scalar <- generateMax l
-    let element = scalarMultiply group scalar generator
-    pure (KeyPair element scalar)
-
   elementSizeBits _ = 255
-  scalarSizeBits _ = 255
 
   arbitraryElement group bytes =
     let seed = expandArbitraryElementSeed bytes (scalarSizeBytes group + 16) :: ByteString
         y = bytesToNumber seed `mod` q
     in
     List.head [ element | Right element <- map makeGroupMember [y..] ]
+
+instance AbelianGroup Ed25519 where
+  type Scalar Ed25519 = Integer
+
+  scalarMultiply _ n x = safeScalarMultiply n x
+
+  integerToScalar _ x = x
+  scalarToInteger _ x = x
+
+  scalarSizeBits _ = 255
+
+  generateElement group = do
+    scalar <- generateMax l
+    let element = scalarMultiply group scalar generator
+    pure (KeyPair element scalar)
+
 
 -- | Errors that can occur within the group.
 data Error
@@ -335,7 +340,11 @@ That final check is a Python assertion,
 which would crash the program if incorrect.
 For programming convenience, I just skip these values.
 
-jml doesn't know what is meant by the 'order' of a point.
+The 'order' of a point \(x\) is the number \(n\) such that:
+'scalarMultiply group (integerToScalar group n) x == groupIdentity group'
+
+Note this is different from the order of a /group/,
+which for finite groups is the number of elements in the group.
 
 -}
 
