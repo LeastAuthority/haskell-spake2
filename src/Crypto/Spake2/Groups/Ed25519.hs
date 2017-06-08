@@ -340,7 +340,7 @@ That final check is a Python assertion,
 which would crash the program if incorrect.
 For programming convenience, I just skip these values.
 
-The 'order' of a point \(x\( is the number \(n\) such that:
+The 'order' of a point \(x\) is the number \(n\) such that:
 'scalarMultiply group (integerToScalar group n) x == groupIdentity group'
 
 Note this is different from the order of a /group/,
