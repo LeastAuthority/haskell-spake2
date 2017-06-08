@@ -1,5 +1,5 @@
 name: spake2
-version: 0.1.0
+version: 0.2.0
 synopsis: Implementation of the SPAKE2 Password-Authenticated Key Exchange algorithm
 description: |
   This library implements the SPAKE2 password-authenticated key exchange
@@ -10,6 +10,8 @@ maintainer: Jonathan M. Lange <jml@mumak.net>
 license: Apache
 github: jml/haskell-spake2
 category: Crypto
+extra-source-files:
+  - CHANGELOG.md
 
 ghc-options: -Wall -Wno-type-defaults
 default-extensions:
