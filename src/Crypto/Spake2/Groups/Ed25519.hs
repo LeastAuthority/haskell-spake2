@@ -140,7 +140,7 @@ l = 2 ^ 252 + 27742317777372353535851937790883648493
 
 -- TODO document this
 dConst :: Integer
-dConst = -121665 * inv 121666  -- XXX: force eval?
+dConst = (-121665 * inv 121666) `mod` q  -- XXX: force eval?
 
 -- TODO document this
 i :: Integer
