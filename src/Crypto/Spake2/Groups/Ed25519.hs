@@ -65,7 +65,7 @@ instance Group Ed25519 where
   type Element Ed25519 = ExtendedPoint 'Member
 
   elementAdd _ x y = addExtendedPoints x y
-  elementNegate group = scalarMultiply group (l - 1)
+  elementNegate _ x = negateExtendedPoint x
   groupIdentity _ = assertInGroup extendedZero
 
   encodeElement _ x = encodeAffinePoint (extendedToAffine' x)
@@ -287,6 +287,11 @@ doubleExtendedPoint ExtendedPoint{x = x1, y = y1, z = z1} =
     d' = (-a) `mod` q
     -- J = (X1+Y1) % Q
     j = (x1 + y1) `mod` q
+
+-- | Negate an extended point.
+negateExtendedPoint :: ExtendedPoint preserving -> ExtendedPoint preserving
+negateExtendedPoint ExtendedPoint{x = x1, y = y1, z = z1, t = t1} =
+  ExtendedPoint{x= q - x1, y = y1, z = z1, t = q - t1}
 
 -- | Multiply a point (might be in the group, might not) by a scalar.
 safeScalarMultiply :: Integer -> ExtendedPoint a -> ExtendedPoint a
