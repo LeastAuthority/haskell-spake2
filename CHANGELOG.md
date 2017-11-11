@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 (2017-11-11)
+
+* Depend on protolude 0.2 minimum
+
 ## 0.2.0 (2017-06-08)
 
 * `Group` typeclass split into `Group` and `AbelianGroup` typeclasses

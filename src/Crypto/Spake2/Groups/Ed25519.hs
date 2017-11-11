@@ -18,7 +18,7 @@ module Crypto.Spake2.Groups.Ed25519
   , generator
   ) where
 
-import Protolude hiding (clamp, group, zero)
+import Protolude hiding (group, zero)
 
 import Crypto.Error (CryptoFailable(..), CryptoError(..))
 import Crypto.Number.Generate (generateMax)

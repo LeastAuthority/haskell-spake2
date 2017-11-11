@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.15.0.
+-- This file has been generated from package.yaml by hpack version 0.17.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -32,7 +32,7 @@ library
   ghc-options: -Wall -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
-    , protolude
+    , protolude >= 0.2
     , bytestring
     , cryptonite
     , memory
@@ -54,7 +54,7 @@ executable haskell-spake2-interop-entrypoint
   ghc-options: -Wall -Wno-type-defaults -threaded
   build-depends:
       base >= 4.9 && < 5
-    , protolude
+    , protolude >= 0.2
     , cryptonite
     , memory
     , optparse-applicative
@@ -70,7 +70,7 @@ test-suite tasty
   ghc-options: -Wall -Wno-type-defaults
   build-depends:
       base >= 4.9 && < 5
-    , protolude
+    , protolude >= 0.2
     , cryptonite
     , QuickCheck
     , spake2
