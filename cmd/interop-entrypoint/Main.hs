@@ -20,7 +20,7 @@ import Protolude hiding (group)
 import Crypto.Hash (SHA256(..))
 import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
 import Options.Applicative
-import System.IO (hFlush, hGetLine, hPutStrLn)
+import System.IO (hFlush, hGetLine)
 
 import qualified Crypto.Spake2 as Spake2
 import Crypto.Spake2
@@ -64,7 +64,7 @@ configParser =
 -- | Terminate the test with a failure, printing a message to stderr.
 abort :: HasCallStack => Text -> IO ()
 abort message = do
-  hPutStrLn stderr $ toS ("ERROR: " <> message)
+  hPutStrLn stderr ("ERROR: " <> message)
   exitWith (ExitFailure 1)
 
 
@@ -94,7 +94,7 @@ runInteropTest protocol password inH outH = do
 
   where
     output message = do
-      hPutStrLn outH (toS (convertToBase Base16 message :: ByteString))
+      hPutStrLn outH (convertToBase Base16 message :: ByteString)
       hFlush outH
 
     parseHex line =
