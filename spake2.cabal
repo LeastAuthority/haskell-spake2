@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           spake2
-version:        0.2.0
+version:        0.3.0
 synopsis:       Implementation of the SPAKE2 Password-Authenticated Key Exchange algorithm
 description:    This library implements the SPAKE2 password-authenticated key exchange
                 ("PAKE") algorithm. This allows two parties, who share a weak password, to
