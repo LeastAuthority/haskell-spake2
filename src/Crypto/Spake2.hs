@@ -90,6 +90,7 @@ module Crypto.Spake2
   , Protocol
   , makeAsymmetricProtocol
   , makeSymmetricProtocol
+  , spake2Exchange
   , startSpake2
   , Math.computeOutboundMessage
   , Math.generateKeyMaterial
@@ -153,7 +154,7 @@ elementToMessage protocol element = prefix <> encodeElement (group protocol) ele
         Asymmetric{us=SideB} -> "B"
 
 -- | An error that occurs when interpreting messages from the other side of the exchange.
-data MessageError
+data MessageError e
   = EmptyMessage -- ^ We received an empty bytestring.
   | UnexpectedPrefix Word8 Word8
     -- ^ The bytestring had an unexpected prefix.
@@ -165,13 +166,16 @@ data MessageError
     -- ^ Message could not be decoded to an element of the group.
     -- This can indicate either an error in serialization logic,
     -- or in mathematics.
+  | UnknownError e
+    -- ^ An error arising from the "receive" action in 'spake2Exchange'.
   deriving (Eq, Show)
 
 -- | Turn a 'MessageError' into human-readable text.
-formatError :: MessageError -> Text
+formatError :: Show e => MessageError e -> Text
 formatError EmptyMessage = "Other side sent us an empty message"
 formatError (UnexpectedPrefix got expected) = "Other side claims to be " <> show (chr (fromIntegral got)) <> ", expected " <> show (chr (fromIntegral expected))
 formatError (BadCrypto err message) = "Could not decode message (" <> show message <> ") to element: " <> show err
+formatError (UnknownError err) = "Error receiving message from other side: " <> show err
 
 -- | Extract an element on the group from an incoming message.
 --
@@ -179,7 +183,7 @@ formatError (BadCrypto err message) = "Could not decode message (" <> show messa
 -- or the other side does not appear to be the expected other side.
 --
 -- TODO: Need to protect against reflection attack at some point.
-extractElement :: Group group => Protocol group hashAlgorithm -> ByteString -> Either MessageError (Element group)
+extractElement :: Group group => Protocol group hashAlgorithm -> ByteString -> Either (MessageError error) (Element group)
 extractElement protocol message =
   case ByteString.uncons message of
     Nothing -> throwError EmptyMessage
@@ -274,6 +278,57 @@ getParams Protocol{group, relation} =
       , Math.ourBlind = blind ours
       , Math.theirBlind = blind theirs
       }
+
+-- | Perform an entire SPAKE2 exchange.
+--
+-- Given a SPAKE2 protocol that has all of the parameters for this exchange,
+-- generate a one-off message from this side and receive a one off message
+-- from the other.
+--
+-- Once we are done, return a key shared between both sides for a single
+-- session.
+--
+-- Note: as per the SPAKE2 definition, the session key is not guaranteed
+-- to actually /work/. If the other side has failed to authenticate, you will
+-- still get a session key. Therefore, you must exchange some other message
+-- that has been encrypted using this key in order to confirm that the session
+-- key is indeed shared.
+--
+-- Note: the "send" and "receive" actions are performed 'concurrently'. If you
+-- have ordering requirements, consider using a 'TVar' or 'MVar' to coordinate,
+-- or implementing your own equivalent of 'spake2Exchange'.
+--
+-- If the message received from the other side cannot be parsed, return a
+-- 'MessageError'.
+spake2Exchange
+  :: (AbelianGroup group, HashAlgorithm hashAlgorithm)
+  => Protocol group hashAlgorithm
+  -- ^ A 'Protocol' with all the parameters for the exchange. These parameters
+  -- must be shared by both sides. Construct with 'makeAsymmetricProtocol' or
+  -- 'makeSymmetricProtocol'.
+  -> Password
+  -- ^ The password shared between both sides. Construct with 'makePassword'.
+  -> (ByteString -> IO ())
+  -- ^ An action to send a message. The 'ByteString' parameter is this side's
+  -- SPAKE2 element, encoded using the group encoding, prefixed according to
+  -- the parameters in the 'Protocol'.
+  -> IO (Either error ByteString)
+  -- ^ An action to receive a message. The 'ByteString' generated ought to be
+  -- the protocol-prefixed, group-encoded version of the other side's SPAKE2
+  -- element.
+  -> IO (Either (MessageError error) ByteString)
+  -- ^ Either the shared session key or an error indicating we couldn't parse
+  -- the other side's message.
+spake2Exchange protocol password send receive = do
+  exchange <- startSpake2 protocol password
+  let outboundElement = Math.computeOutboundMessage exchange
+  let outboundMessage = elementToMessage protocol outboundElement
+  (_, inboundMessage) <- concurrently (send outboundMessage) receive
+  pure $ do
+    inboundMessage' <- first UnknownError inboundMessage
+    inboundElement <- extractElement protocol inboundMessage'
+    let keyMaterial = Math.generateKeyMaterial exchange inboundElement
+    pure (createSessionKey protocol inboundElement outboundElement keyMaterial password)
 
 -- | Commence a SPAKE2 exchange.
 startSpake2

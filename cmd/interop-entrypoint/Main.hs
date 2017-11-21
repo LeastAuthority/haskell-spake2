@@ -29,14 +29,8 @@ import Crypto.Spake2
   , SideID(..)
   , makeSymmetricProtocol
   , makeAsymmetricProtocol
-  , createSessionKey
   , makePassword
-  , computeOutboundMessage
-  , generateKeyMaterial
-  , extractElement
-  , startSpake2
-  , elementToMessage
-  , formatError
+  , spake2Exchange
   )
 import Crypto.Spake2.Group (AbelianGroup, Group(..))
 import Crypto.Spake2.Groups (Ed25519(..))
@@ -76,31 +70,22 @@ runInteropTest
   -> Handle
   -> IO ()
 runInteropTest protocol password inH outH = do
-  spake2 <- startSpake2 protocol password
-  let outElement = computeOutboundMessage spake2
-  output (elementToMessage protocol outElement)
-  line <- hGetLine inH
-  let inMsg = parseHex (toS line :: ByteString)
-  case inMsg of
-    Left err -> abort (toS err)
-    Right inMsgBytes ->
-      case extractElement protocol inMsgBytes of
-        Left err -> abort $ "Could not handle incoming message (line = " <> show line <> ", msgBytes = " <>  show inMsgBytes <> "): " <> formatError err
-        Right inElement -> do
-          -- TODO: This is wrong, because it doesn't handle A/B properly.
-          let key = generateKeyMaterial spake2 inElement
-          let sessionKey = createSessionKey protocol inElement outElement key password
-          output sessionKey
-
+  sessionKey' <- spake2Exchange protocol password output input
+  case sessionKey' of
+    Left err -> abort $ show err
+    Right sessionKey -> output sessionKey
   where
+    output :: ByteString -> IO ()
     output message = do
       hPutStrLn outH (convertToBase Base16 message :: ByteString)
       hFlush outH
 
-    parseHex line =
-      case convertFromBase Base16 line of
-        Left err -> Left ("Could not decode line (reason: " <> err <> "): " <> show line)
-        Right bytes -> Right bytes
+    input :: IO (Either Text ByteString)
+    input = do
+      line <- hGetLine inH
+      case convertFromBase Base16 (toS line :: ByteString) of
+        Left err -> pure . Left . toS $ "Could not decode line (reason: " <> err <> "): " <> show line
+        Right bytes -> pure (Right bytes)
 
 
 makeProtocolFromSide :: Side -> Protocol Ed25519 SHA256
