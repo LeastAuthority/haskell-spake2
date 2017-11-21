@@ -168,6 +168,7 @@ data MessageError e
     -- or in mathematics.
   | UnknownError e
     -- ^ An error arising from the "receive" action in 'spake2Exchange'.
+    -- Since 0.4.0
   deriving (Eq, Show)
 
 -- | Turn a 'MessageError' into human-readable text.
@@ -300,6 +301,8 @@ getParams Protocol{group, relation} =
 --
 -- If the message received from the other side cannot be parsed, return a
 -- 'MessageError'.
+--
+-- Since 0.4.0.
 spake2Exchange
   :: (AbelianGroup group, HashAlgorithm hashAlgorithm)
   => Protocol group hashAlgorithm

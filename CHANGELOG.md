@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 (2017-11-21)
+
+* Add `spake2Exchange`, for much more convenient exchanges.
+
 ## 0.3.0 (2017-11-11)
 
 * Depend on protolude 0.2 minimum
