@@ -45,8 +45,16 @@ tests:
     main: Tasty.hs
     source-dirs: tests
     dependencies:
+      - aeson
+      - bytestring
       - cryptonite
+      - memory
+      - process
       - QuickCheck
       - spake2
       - tasty
       - tasty-hspec
+
+# Only used for testing.
+data-files:
+  - tests/python/spake2_exchange.py

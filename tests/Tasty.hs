@@ -8,6 +8,7 @@ import Test.Tasty (defaultMain, testGroup)
 
 import qualified Spake2
 import qualified Groups
+import qualified Integration
 
 main :: IO ()
 main = sequence tests >>= defaultMain . testGroup "Spake2"
@@ -15,4 +16,5 @@ main = sequence tests >>= defaultMain . testGroup "Spake2"
     tests =
       [ Spake2.tests
       , Groups.tests
+      , Integration.tests
       ]

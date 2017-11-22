@@ -1,7 +1,11 @@
 # Changelog
 
-## 0.4.0 (2017-11-21)
+## 0.4.0 (2017-11-22)
 
+* Change `createSessionKey` inputs to be `inbound`, `outbound` rather than
+  `side A`, `side B`. If you were passing as `side A`, `side B` before, it
+  should continue to work, unless you were deliberately triggering an error
+  condition.
 * Add `spake2Exchange`, for much more convenient exchanges.
 
 ## 0.3.0 (2017-11-11)

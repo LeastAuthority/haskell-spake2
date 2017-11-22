@@ -14,76 +14,51 @@ tests = testSpec "Spake2" $ do
   describe "Asymmetric protocol" $ do
     it "Produces matching session keys when passwords match" $ do
       let password = Spake2.makePassword "abc"
-      let hashAlg = SHA256
-      let group = Ed25519
-      let m = Group.arbitraryElement group ("M" :: ByteString)
-      let n = Group.arbitraryElement group ("N" :: ByteString)
-      let idA = Spake2.SideID ""
-      let idB = Spake2.SideID ""
-      let protocolA = Spake2.makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideA
-      let protocolB = Spake2.makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideB
-      sideA <- Spake2.startSpake2 protocolA password
-      sideB <- Spake2.startSpake2 protocolB password
-      let aOut = Spake2.computeOutboundMessage sideA
-      let bOut = Spake2.computeOutboundMessage sideB
-      let aKey = Spake2.generateKeyMaterial sideA bOut
-      let bKey = Spake2.generateKeyMaterial sideB aOut
-      let aSessionKey = Spake2.createSessionKey protocolA aOut bOut aKey password
-      let bSessionKey = Spake2.createSessionKey protocolA aOut bOut bKey password
+      let idA = Spake2.SideID "side-a"
+      let idB = Spake2.SideID "side-b"
+      let protocolA = defaultAsymmetricProtocol idA idB Spake2.SideA
+      let protocolB = defaultAsymmetricProtocol idA idB Spake2.SideB
+      (Right aSessionKey, Right bSessionKey) <- (protocolA, password) `versus` (protocolB, password)
       aSessionKey `shouldBe` bSessionKey
+
     it "Produces differing session keys when passwords do not match" $ do
       let password1 = Spake2.makePassword "abc"
       let password2 = Spake2.makePassword "cba"
-      let hashAlg = SHA256
-      let group = Ed25519
-      let m = Group.arbitraryElement group ("M" :: ByteString)
-      let n = Group.arbitraryElement group ("N" :: ByteString)
       let idA = Spake2.SideID ""
       let idB = Spake2.SideID ""
-      let protocolA = Spake2.makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideA
-      let protocolB = Spake2.makeAsymmetricProtocol hashAlg group m n idA idB Spake2.SideB
-      sideA <- Spake2.startSpake2 protocolA password1
-      sideB <- Spake2.startSpake2 protocolB password2
-      let aOut = Spake2.computeOutboundMessage sideA
-      let bOut = Spake2.computeOutboundMessage sideB
-      let aKey = Spake2.generateKeyMaterial sideA bOut
-      let bKey = Spake2.generateKeyMaterial sideB aOut
-      let aSessionKey = Spake2.createSessionKey protocolA aOut bOut aKey password1
-      let bSessionKey = Spake2.createSessionKey protocolA aOut bOut bKey password2
+      let protocolA = defaultAsymmetricProtocol idA idB Spake2.SideA
+      let protocolB = defaultAsymmetricProtocol idA idB Spake2.SideB
+      (Right aSessionKey, Right bSessionKey) <- (protocolA, password1) `versus` (protocolB, password2)
       aSessionKey `shouldNotBe` bSessionKey
+
   describe "Symmetric protocol" $ do
     it "Produces matching session keys when passwords match" $ do
       let password = Spake2.makePassword "abc"
-      let hashAlg = SHA256
-      let group = Ed25519
-      let s = Group.arbitraryElement group ("M" :: ByteString)
-      let idSymmetric = Spake2.SideID ""
-      let protocol1 = Spake2.makeSymmetricProtocol hashAlg group s idSymmetric
-      let protocol2 = Spake2.makeSymmetricProtocol hashAlg group s idSymmetric
-      side1 <- Spake2.startSpake2 protocol1 password
-      side2 <- Spake2.startSpake2 protocol2 password
-      let out1 = Spake2.computeOutboundMessage side1
-      let out2 = Spake2.computeOutboundMessage side2
-      let key1 = Spake2.generateKeyMaterial side1 out2
-      let key2 = Spake2.generateKeyMaterial side2 out1
-      let sessionKey1 = Spake2.createSessionKey protocol1 out1 out2 key1 password
-      let sessionKey2 = Spake2.createSessionKey protocol2 out1 out2 key2 password
+      let protocol = defaultSymmetricProtocol (Spake2.SideID "")
+      (Right sessionKey1, Right sessionKey2) <- (protocol, password) `versus` (protocol, password)
       sessionKey1 `shouldBe` sessionKey2
+
     it "Produces differing session keys when passwords do not match" $ do
       let password1 = Spake2.makePassword "abc"
       let password2 = Spake2.makePassword "cba"
-      let hashAlg = SHA256
-      let group = Ed25519
-      let s = Group.arbitraryElement group ("M" :: ByteString)
-      let idSymmetric = Spake2.SideID ""
-      let protocol1 = Spake2.makeSymmetricProtocol hashAlg group s idSymmetric
-      let protocol2 = Spake2.makeSymmetricProtocol hashAlg group s idSymmetric
-      side1 <- Spake2.startSpake2 protocol1 password1
-      side2 <- Spake2.startSpake2 protocol2 password2
-      let out1 = Spake2.computeOutboundMessage side1
-      let out2 = Spake2.computeOutboundMessage side2
-      let key1 = Spake2.generateKeyMaterial side1 out2
-      let key2 = Spake2.generateKeyMaterial side2 out1
-      let sessionKey1 = Spake2.createSessionKey protocol1 out1 out2 key1 password1
-      let sessionKey2 = Spake2.createSessionKey protocol2 out1 out2 key2 password2
+      let protocol = defaultSymmetricProtocol (Spake2.SideID "")
+      (Right sessionKey1, Right sessionKey2) <- (protocol, password1) `versus` (protocol, password2)
       sessionKey1 `shouldNotBe` sessionKey2
+
+  where
+    defaultAsymmetricProtocol = Spake2.makeAsymmetricProtocol SHA256 group m n
+    m = Group.arbitraryElement group ("M" :: ByteString)
+    n = Group.arbitraryElement group ("N" :: ByteString)
+
+    defaultSymmetricProtocol = Spake2.makeSymmetricProtocol SHA256 group s
+    s = Group.arbitraryElement group ("symmetric" :: ByteString)
+
+    group = Ed25519
+
+    -- | Run protocol A with password A against protocol B with password B.
+    versus (protocolA, passwordA) (protocolB, passwordB) = do
+      aOutVar <- newEmptyMVar
+      bOutVar <- newEmptyMVar
+      concurrently
+        (Spake2.spake2Exchange protocolA passwordA (putMVar aOutVar) (Right <$> readMVar bOutVar))
+        (Spake2.spake2Exchange protocolB passwordB (putMVar bOutVar) (Right <$> readMVar aOutVar))
