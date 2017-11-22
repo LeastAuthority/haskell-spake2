@@ -27,8 +27,14 @@ jobs:
             - /root/.stack
             - .stack-work
       - run:
-          name: Install Python dependencies
-          command: pip install -r requirements.txt
+          name: apt-get update
+          command: apt-get update
+      - run:
+          name: Install pip
+          command: apt-get install -y python-pip
+      - run:
+          name: Install dependencies
+          command: pip install --user -r requirements.txt
       - run:
           name: Tests
           command: stack test --skip-ghc-check --no-terminal
