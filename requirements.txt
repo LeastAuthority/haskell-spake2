@@ -1,0 +1,3 @@
+# These are Python requirements for our interoperability tests.
+spake2==0.7
+attrs==17.3.0
