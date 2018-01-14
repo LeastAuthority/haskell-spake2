@@ -301,7 +301,6 @@ safeScalarMultiply n = scalarMultiplyExtendedPoint addExtendedPoints n
 scalarMultiplyExtendedPoint :: (ExtendedPoint a -> ExtendedPoint a -> ExtendedPoint a) -> Integer -> ExtendedPoint a -> ExtendedPoint a
 scalarMultiplyExtendedPoint _ 0 _    = extendedZero
 scalarMultiplyExtendedPoint add n x
-  | n >= l    = scalarMultiplyExtendedPoint add (n `mod` l) x
   | even n    = doubleExtendedPoint (scalarMultiplyExtendedPoint add (n `div` 2) x)
   | n == 1    = x
   | n <= 0    = panic $ "Unexpected negative multiplier: " <> show n
