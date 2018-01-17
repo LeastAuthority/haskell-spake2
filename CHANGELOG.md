@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 (2018-01-17)
+
+* Fixed potential security issue in `Ed25519` (see https://github.com/jml/haskell-spake2/pull/16),
+  present since initial release. Please update as soon as possible.
+
 ## 0.4.0 (2017-11-22)
 
 * Change `createSessionKey` inputs to be `inbound`, `outbound` rather than
