@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 -- | Entrypoint for testing interoperability.
 --
 -- Interoperability harness lives at <https://github.com/leastauthority/spake2-interop-test>
@@ -19,6 +20,7 @@ import Protolude hiding (group)
 
 import Crypto.Hash (SHA256(..))
 import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
+import Data.String (String)
 import Options.Applicative
 import System.IO (hFlush, hGetLine)
 
@@ -52,8 +54,7 @@ configParser =
         "B" -> pure SideB
         "Symmetric" -> pure Symmetric
         unknown -> throwError $ "Unrecognized side: " <> unknown
-    passwordParser = makePassword . toS <$> (str :: ReadM Text)
-
+    passwordParser = makePassword . toS @String <$> str
 
 -- | Terminate the test with a failure, printing a message to stderr.
 abort :: HasCallStack => Text -> IO ()
