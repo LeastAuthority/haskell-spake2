@@ -52,7 +52,7 @@ configParser =
         "B" -> pure SideB
         "Symmetric" -> pure Symmetric
         unknown -> throwError $ "Unrecognized side: " <> unknown
-    passwordParser = makePassword . toS <$> str
+    passwordParser = makePassword . toS <$> (str :: ReadM Text)
 
 
 -- | Terminate the test with a failure, printing a message to stderr.
