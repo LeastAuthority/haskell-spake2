@@ -23,32 +23,32 @@ tests = testSpec "Integration" $
     it "Generates the same SPAKE2 session key (symmetric)" $ do
       let sideID = "treebeard"
       let password = "mellon"
-      let protocol = Spake2.makeSymmetricProtocol SHA256 Ed25519 blindS (Spake2.SideID sideID)
+      let protocol = Spake2.makeSymmetricProtocol SHA256 Ed25519 blindS (Spake2.SideID (Char8.pack sideID))
       exchangeWithPython protocol password
         [ "--side=S"
-        , "--side-id=" <> toS sideID
+        , "--side-id=" <> sideID
         ]
 
     it "Generates the same SPAKE2 session key (asymmetric, we are side B)" $ do
       let ourSideID = "alliance"
       let theirSideID = "horde"
       let password = "mellon"
-      let protocol = Spake2.makeAsymmetricProtocol SHA256 Ed25519 blindA blindB (Spake2.SideID theirSideID) (Spake2.SideID ourSideID) Spake2.SideB
+      let protocol = Spake2.makeAsymmetricProtocol SHA256 Ed25519 blindA blindB (Spake2.SideID (Char8.pack theirSideID)) (Spake2.SideID (Char8.pack ourSideID)) Spake2.SideB
       exchangeWithPython protocol password
         [ "--side=A"
-        , "--side-id=" <> toS theirSideID
-        , "--other-side-id=" <> toS ourSideID
+        , "--side-id=" <> theirSideID
+        , "--other-side-id=" <> ourSideID
         ]
 
     it "Generates the same SPAKE2 session key (asymmetric, we are side A)" $ do
       let ourSideID = "alliance"
       let theirSideID = "horde"
       let password = "mellon"
-      let protocol = Spake2.makeAsymmetricProtocol SHA256 Ed25519 blindA blindB (Spake2.SideID ourSideID) (Spake2.SideID theirSideID) Spake2.SideA
+      let protocol = Spake2.makeAsymmetricProtocol SHA256 Ed25519 blindA blindB (Spake2.SideID (Char8.pack ourSideID)) (Spake2.SideID (Char8.pack theirSideID)) Spake2.SideA
       exchangeWithPython protocol password
         [ "--side=B"
-        , "--side-id=" <> toS theirSideID
-        , "--other-side-id=" <> toS ourSideID
+        , "--side-id=" <> theirSideID
+        , "--other-side-id=" <> ourSideID
         ]
 
   where
@@ -60,7 +60,7 @@ tests = testSpec "Integration" $
 
     exchangeWithPython protocol password args = do
       scriptExe <- Paths_spake2.getDataFileName "tests/python/spake2_exchange.py"
-      let testScript = (Process.proc "python" (scriptExe:("--code=" <> toS password):args))
+      let testScript = (Process.proc "python" (scriptExe:("--code=" <> password):args))
                        { Process.std_in = Process.CreatePipe
                        , Process.std_out = Process.CreatePipe
                        , Process.std_err = Process.Inherit  -- So we get stack traces printed during test runs.
@@ -71,6 +71,6 @@ tests = testSpec "Integration" $
           IO.hSetBuffering stdin IO.LineBuffering
           IO.hSetBuffering stdout IO.LineBuffering
           IO.hSetBuffering stderr IO.LineBuffering
-          (do Right sessionKey <- Spake2.spake2Exchange protocol (Spake2.makePassword password) (send stdin) (receive stdout)
+          (do Right sessionKey <- Spake2.spake2Exchange protocol (Spake2.makePassword (Char8.pack password)) (send stdin) (receive stdout)
               theirSpakeKey <- ByteString.hGetLine stdout
               theirSpakeKey `shouldBe` convertToBase Base16 sessionKey) `finally` Process.waitForProcess ph

@@ -20,10 +20,10 @@ import Protolude hiding (group)
 
 import Crypto.Hash (SHA256(..))
 import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
-import Data.String (String)
 import Options.Applicative
 import System.IO (hFlush, hGetLine)
 
+import qualified Data.ByteString.Char8 as Char8
 import qualified Crypto.Spake2 as Spake2
 import Crypto.Spake2
   ( Password
@@ -54,7 +54,7 @@ configParser =
         "B" -> pure SideB
         "Symmetric" -> pure Symmetric
         unknown -> throwError $ "Unrecognized side: " <> unknown
-    passwordParser = makePassword . toS @String <$> str
+    passwordParser = makePassword . Char8.pack <$> str
 
 -- | Terminate the test with a failure, printing a message to stderr.
 abort :: HasCallStack => Text -> IO ()
@@ -84,7 +84,7 @@ runInteropTest protocol password inH outH = do
     input :: IO (Either Text ByteString)
     input = do
       line <- hGetLine inH
-      case convertFromBase Base16 (toS line :: ByteString) of
+      case convertFromBase Base16 (Char8.pack line) of
         Left err -> pure . Left . toS $ "Could not decode line (reason: " <> err <> "): " <> show line
         Right bytes -> pure (Right bytes)
 
