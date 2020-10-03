@@ -4,4 +4,4 @@ packages:
   - .
 
 extra-deps:
-  - protolude-0.2
+  - protolude-0.3.0
