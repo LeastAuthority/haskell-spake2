@@ -1,6 +1,7 @@
 module Integration (tests) where
 
-import Protolude hiding (stdin, stdout)
+import Protolude hiding (stdin, stdout, toS)
+import Protolude.Conv (toS)
 
 import Crypto.Hash (SHA256(..))
 import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
