@@ -16,7 +16,8 @@
 
 module Main (main) where
 
-import Protolude hiding (group)
+import Protolude hiding (group, toS)
+import Protolude.Conv (toS)
 
 import Crypto.Hash (SHA256(..))
 import Data.ByteArray.Encoding (convertFromBase, convertToBase, Base(Base16))
