@@ -1,7 +1,7 @@
-resolver: lts-9.11
+resolver: lts-16.17
 
 packages:
   - .
 
 extra-deps:
-  - protolude-0.2
+  - protolude-0.3.0
