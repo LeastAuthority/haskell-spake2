@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.3 (2020-11-19)
+
+* general maintenance and removal of bitrot.
+* Pin protolude to 0.3.x to prevent further breakage due to changes in
+  protolude.
+
+## 0.4.2 (2018-01-22)
+
+* Minor release to allow docs to be generated on Hackage.
+
+## 0.4.1 (2018-01-17)
+
+* Fixed potential security issue in Ed25519 (see
+  https://github.com/jml/haskell-spake2/pull/16), present since
+  initial release. Please update as soon as possible.
+
 ## 0.4.0 (2017-11-22)
 
 * Change `createSessionKey` inputs to be `inbound`, `outbound` rather than

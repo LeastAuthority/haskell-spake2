@@ -1,14 +1,15 @@
 name: spake2
-version: 0.4.0
+version: 0.4.3
 synopsis: Implementation of the SPAKE2 Password-Authenticated Key Exchange algorithm
 description: |
   This library implements the SPAKE2 password-authenticated key exchange
   ("PAKE") algorithm. This allows two parties, who share a weak password, to
   safely derive a strong shared secret (and therefore build an
   encrypted+authenticated channel).
-maintainer: Jonathan M. Lange <jml@mumak.net>
+author: Jonathan M. Lange <jml@mumak.net>
+maintainer: Least Authority TFA GmbH
 license: Apache
-github: jml/haskell-spake2
+github: LeastAuthority/haskell-spake2
 category: Crypto
 extra-source-files:
   - CHANGELOG.md
