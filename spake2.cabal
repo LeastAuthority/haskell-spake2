@@ -5,16 +5,17 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           spake2
-version:        0.4.0
+version:        0.4.3
 synopsis:       Implementation of the SPAKE2 Password-Authenticated Key Exchange algorithm
 description:    This library implements the SPAKE2 password-authenticated key exchange
                 ("PAKE") algorithm. This allows two parties, who share a weak password, to
                 safely derive a strong shared secret (and therefore build an
                 encrypted+authenticated channel).
 category:       Crypto
-homepage:       https://github.com/jml/haskell-spake2#readme
-bug-reports:    https://github.com/jml/haskell-spake2/issues
-maintainer:     Jonathan M. Lange <jml@mumak.net>
+homepage:       https://github.com/LeastAuthority/haskell-spake2#readme
+bug-reports:    https://github.com/LeastAuthority/haskell-spake2/issues
+author:         Jonathan M. Lange <jml@mumak.net>
+maintainer:     Least Authority TFA GmbH
 license:        Apache
 license-file:   LICENSE
 build-type:     Simple
@@ -25,7 +26,7 @@ data-files:
 
 source-repository head
   type: git
-  location: https://github.com/jml/haskell-spake2
+  location: https://github.com/LeastAuthority/haskell-spake2
 
 library
   hs-source-dirs:
@@ -37,7 +38,7 @@ library
     , bytestring
     , cryptonite
     , memory
-    , protolude >=0.3
+    , protolude >=0.3 && <0.4
   exposed-modules:
       Crypto.Spake2
       Crypto.Spake2.Group
@@ -63,7 +64,7 @@ executable haskell-spake2-interop-entrypoint
     , cryptonite
     , memory
     , optparse-applicative
-    , protolude >=0.3
+    , protolude >=0.3 && <0.4
     , spake2
   default-language: Haskell2010
 
@@ -82,7 +83,7 @@ test-suite tasty
     , cryptonite
     , memory
     , process
-    , protolude >=0.3
+    , protolude >=0.3 && <0.4
     , spake2
     , tasty
     , tasty-hspec
