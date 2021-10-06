@@ -27,6 +27,14 @@ jobs:
             - /root/.stack
             - .stack-work
       - run:
+          name: workaround for certificate failure
+          command: |
+            mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled
+            apt-get update
+            apt-get -y upgrade
+            apt-get  install -y ca-certificates libgnutls30
+            mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
+      - run:
           name: apt-get update
           command: apt-get update
       - run:
