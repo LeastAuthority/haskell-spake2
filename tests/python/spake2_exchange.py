@@ -14,17 +14,17 @@ from spake2 import SPAKE2_A, SPAKE2_B, SPAKE2_Symmetric
 def main():
     parser = argparse.ArgumentParser(prog='version_exchange')
     parser.add_argument(
-        '--code', dest='code', type=unicode,
+        '--code', dest='code', type=str,
         help='Password to use to connect to other side')
     parser.add_argument(
-        '--side-id', dest='side_id', type=unicode,
+        '--side-id', dest='side_id', type=str,
         help='Identifier for this side of the exchange')
     parser.add_argument(
         '--side', dest='side', choices=['A', 'B', 'S'],
         help=('Which side this represents. '
               'Decides whether we use symmetric or asymmetric variant.'))
     parser.add_argument(
-        '--other-side-id', dest='other_side_id', type=unicode,
+        '--other-side-id', dest='other_side_id', type=str,
         help=('Identifier for other side of the exchange. '
               'Only necessary for asymmetric variants.'))
     params = parser.parse_args(sys.argv[1:])
@@ -66,12 +66,12 @@ class Transport(object):
     output_stream = attr.ib()
 
     def send_line(self, line):
-        self.output_stream.write(line.rstrip().encode('utf8'))
+        self.output_stream.write(line.rstrip().decode("utf8"))
         self.output_stream.write('\n')
         self.output_stream.flush()
 
     def receive_line(self):
-        return self.input_stream.readline().strip().decode('utf8')
+        return self.input_stream.readline().strip()
 
 
 if __name__ == '__main__':
