@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-{-|
+{- |
 Module: Crypto.Spake2.Math
 Description: The mathematical implementation of SPAKE2.
 
@@ -87,83 +87,89 @@ They must be used as input to create a session key.
 
 Constructing a session key is beyond the scope of this module.
 See 'createSessionKey' for more information.
-
 -}
-
 module Crypto.Spake2.Math
-  ( Spake2(..)
-  , Params(..)
-  , startSpake2
-  , Spake2Exchange
-  , computeOutboundMessage
-  , generateKeyMaterial
-  ) where
+    ( Spake2 (..)
+    , Params (..)
+    , startSpake2
+    , Spake2Exchange
+    , computeOutboundMessage
+    , generateKeyMaterial
+    ) where
 
 import Protolude hiding (group)
 
-import Crypto.Random.Types (MonadRandom(..))
+import Crypto.Random.Types (MonadRandom (..))
 
-import Crypto.Spake2.Group (AbelianGroup(..), Group(..), KeyPair(..))
+import Crypto.Spake2.Group (AbelianGroup (..), Group (..), KeyPair (..))
 
--- | The parameters of the SPAKE2 protocol. The other side needs to be using
--- the same values, but with swapped values for 'ourBlind' and 'theirBlind'.
-data Params group
-  = Params
-  { group :: group -- ^ The cyclic group used for encrypting keys
-  , ourBlind :: Element group -- ^ The "blind" we use when sending out values. Side A refers to this as \(M\) in the protocol description.
-  , theirBlind :: Element group -- ^ The "blind" the other side uses when sending values. Side A refers to this as \(N\) in the protocol description.
-  }
+{- | The parameters of the SPAKE2 protocol. The other side needs to be using
+ the same values, but with swapped values for 'ourBlind' and 'theirBlind'.
+-}
+data Params group = Params
+    { group :: group
+    -- ^ The cyclic group used for encrypting keys
+    , ourBlind :: Element group
+    -- ^ The "blind" we use when sending out values. Side A refers to this as \(M\) in the protocol description.
+    , theirBlind :: Element group
+    -- ^ The "blind" the other side uses when sending values. Side A refers to this as \(N\) in the protocol description.
+    }
 
 -- | An instance of the SPAKE2 protocol. This represents one side of the protocol.
-data Spake2 group
-  = Spake2
-  { params :: Params group
-  , password :: Scalar group
-  }
+data Spake2 group = Spake2
+    { params :: Params group
+    , password :: Scalar group
+    }
 
 -- | A SPAKE2 exchange that has been initiated.
-data Spake2Exchange group
-  = Started
-  { spake2 :: Spake2 group -- ^ Description of the specific instance of the
-                           -- SPAKE2 protocol we are using. Parameters,
-                           -- password, and group must be the same for this to
-                           -- work.
-  , xy :: KeyPair group -- ^ Arbitrary element and scalar chosen by this side of the exchange.
-                        -- It is kept secret, and is only used to negotiate an exchange.
-                        -- A "blinded" form is sent to the other side of the protocol.
-  }
+data Spake2Exchange group = Started
+    { spake2 :: Spake2 group
+    -- ^ Description of the specific instance of the
+    -- SPAKE2 protocol we are using. Parameters,
+    -- password, and group must be the same for this to
+    -- work.
+    , xy :: KeyPair group
+    -- ^ Arbitrary element and scalar chosen by this side of the exchange.
+    -- It is kept secret, and is only used to negotiate an exchange.
+    -- A "blinded" form is sent to the other side of the protocol.
+    }
 
--- | Initiate the SPAKE2 exchange. Generates a secret (@xy@) that will be held
--- by this side, and transmitted to the other side in "blinded" form.
+{- | Initiate the SPAKE2 exchange. Generates a secret (@xy@) that will be held
+ by this side, and transmitted to the other side in "blinded" form.
+-}
 startSpake2 :: (AbelianGroup group, MonadRandom randomly) => Spake2 group -> randomly (Spake2Exchange group)
 startSpake2 spake2' = Started spake2' <$> generateElement (group . params $ spake2')
 
 -- | Determine the element (either \(X^{\star}\) or \(Y^{\star}\)) to send to the other side.
 computeOutboundMessage :: AbelianGroup group => Spake2Exchange group -> Element group
 computeOutboundMessage Started{spake2 = Spake2{params = Params{group, ourBlind}, password}, xy} =
-  elementAdd group (keyPairPublic xy) (scalarMultiply group password ourBlind)
+    elementAdd group (keyPairPublic xy) (scalarMultiply group password ourBlind)
 
--- | Generate key material, \(K\), given a message from the other side (either
--- \(Y^{\star}\) or \(X^{\star}\)).
---
--- This key material is the last piece of input required to make the session
--- key, \(SK\), which should be generated as:
---
---   \[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K, pw)\]
---
--- Where:
---
--- * \(H\) is a hash function
--- * \(A\) identifies the initiating side
--- * \(B\) identifies the receiving side
--- * \(X^{star}\) is the outbound message from the initiating side
--- * \(Y^{star}\) is the outbound message from the receiving side
--- * \(K\) is the result of this function
--- * \(pw\) is the password (this is what makes it SPAKE2, not SPAKE1)
+{- | Generate key material, \(K\), given a message from the other side (either
+ \(Y^{\star}\) or \(X^{\star}\)).
+
+ This key material is the last piece of input required to make the session
+ key, \(SK\), which should be generated as:
+
+   \[SK \leftarrow H(A, B, X^{\star}, Y^{\star}, K, pw)\]
+
+ Where:
+
+ * \(H\) is a hash function
+ * \(A\) identifies the initiating side
+ * \(B\) identifies the receiving side
+ * \(X^{star}\) is the outbound message from the initiating side
+ * \(Y^{star}\) is the outbound message from the receiving side
+ * \(K\) is the result of this function
+ * \(pw\) is the password (this is what makes it SPAKE2, not SPAKE1)
+-}
 generateKeyMaterial
-  :: AbelianGroup group
-  => Spake2Exchange group  -- ^ An initiated SPAKE2 exchange
-  -> Element group  -- ^ The outbound message from the other side (i.e. inbound to us)
-  -> Element group -- ^ The final piece of key material to generate the session key.
+    :: AbelianGroup group
+    => Spake2Exchange group
+    -- ^ An initiated SPAKE2 exchange
+    -> Element group
+    -- ^ The outbound message from the other side (i.e. inbound to us)
+    -> Element group
+    -- ^ The final piece of key material to generate the session key.
 generateKeyMaterial Started{spake2 = Spake2{params = Params{group, theirBlind}, password}, xy} inbound =
-  scalarMultiply group (keyPairPrivate xy) (elementSubtract group inbound (scalarMultiply group password theirBlind))
+    scalarMultiply group (keyPairPrivate xy) (elementSubtract group inbound (scalarMultiply group password theirBlind))
