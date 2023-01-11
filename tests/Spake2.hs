@@ -2,7 +2,11 @@ module Spake2 (tests) where
 
 import Protolude hiding (group)
 import Test.Tasty (TestTree)
-import Test.Tasty.Hspec (testSpec, describe, it, shouldBe, shouldNotBe)
+import Test.Tasty.Hspec (testSpec)
+
+import Test.Hspec (describe, it)
+import Test.Hspec.Expectations (shouldBe, shouldNotBe)
+
 
 import Crypto.Hash (SHA256(..))
 import qualified Crypto.Spake2 as Spake2
