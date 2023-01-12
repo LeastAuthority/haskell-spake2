@@ -10,7 +10,11 @@ import qualified Data.ByteString.Char8 as Char8
 import qualified System.IO as IO
 import qualified System.Process as Process
 import Test.Tasty (TestTree)
-import Test.Tasty.Hspec (testSpec, describe, it, shouldBe)
+import Test.Tasty.Hspec (testSpec)
+
+import Test.Hspec (describe, it)
+import Test.Hspec.Expectations (shouldBe)
+
 
 import qualified Crypto.Spake2 as Spake2
 import Crypto.Spake2.Group (Group(arbitraryElement))

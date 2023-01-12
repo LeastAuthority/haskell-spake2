@@ -86,7 +86,9 @@ test-suite tasty
     , protolude >=0.3 && <0.4
     , spake2
     , tasty
+    , hspec >= 2.10 && <3
     , tasty-hspec
+    , hspec-expectations >= 0.8.2 && <0.9
   other-modules:
       Groups
       Integration
