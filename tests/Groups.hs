@@ -7,7 +7,10 @@ import Protolude hiding (group)
 import Crypto.Error (CryptoFailable(..))
 import Test.QuickCheck (Gen, (===), arbitrary, forAll, property)
 import Test.Tasty (TestTree)
-import Test.Tasty.Hspec (Spec, testSpec, describe, it, shouldBe)
+import Test.Tasty.Hspec (testSpec)
+
+import Test.Hspec (Spec, describe, it)
+import Test.Hspec.Expectations (shouldBe)
 
 import Crypto.Spake2.Group (AbelianGroup(..), Group(..))
 import Crypto.Spake2.Groups
