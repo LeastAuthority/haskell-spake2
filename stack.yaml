@@ -1,7 +1,0 @@
-resolver: lts-16.17
-
-packages:
-  - .
-
-extra-deps:
-  - protolude-0.3.0
