@@ -22,7 +22,9 @@ jobs:
 
       - run:
           name: upgrade Cabal
-          command: cabal install cabal-install
+          command: |
+            cabal update
+            cabal install cabal-install
 
       - run:
           name: Tests
