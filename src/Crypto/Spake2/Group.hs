@@ -24,7 +24,7 @@ import Crypto.Spake2.Util (bytesToNumber)
 -- | A mathematical group intended to be used with SPAKE2.
 class Group group where
   -- | An element of the group.
-  type Element group :: *
+  type Element group :: Type
 
   -- | Group addition.
   --
@@ -119,7 +119,7 @@ class Group group => AbelianGroup group where
   -- | A scalar for this group.
   -- Mathematically equivalent to an integer,
   -- but possibly stored differently for computational reasons.
-  type Scalar group :: *
+  type Scalar group :: Type
 
   -- | Multiply an element of the group with respect to a scalar.
   --
