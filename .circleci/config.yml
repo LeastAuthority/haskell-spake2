@@ -21,5 +21,11 @@ jobs:
           command: pip3 install --user -r requirements.txt
 
       - run:
+          name: upgrade Cabal
+          command: cabal install cabal-install
+
+      - run:
           name: Tests
-          command: cabal test
+          command: |
+            cabal configure --enable-tests
+            cabal test
